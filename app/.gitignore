@@ -1,0 +1,54 @@
+# dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# proyecto nativo: lo regenera `expo prebuild`, no se versiona
+/android
+/ios
+.kotlin/
+*.orig.*
+
+# APK compilados
+*.apk
+
+# Firma del APK. Guárdala junto a las copias de seguridad: si se pierde, no se
+# puede instalar encima y hay que desinstalar, lo que BORRA los datos de la app.
+*.jks
+*.p8
+*.p12
+*.key
+*.keystore
+*.mobileprovision
+keystore.properties
+
+# Copias de seguridad: llevan tus gastos, medicinas y listas. Nunca subir al repo.
+ludok-home-backup-*.json
+
+# logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.metro-health-check*
+
+# typescript
+*.tsbuildinfo
+
+# entorno local
+.env*.local
+
+# editores
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.sw?
+
+AGENTS.md
+CLAUDE.md

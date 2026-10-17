@@ -2,10 +2,6 @@
 requests
 python-dotenv
 
-# Nextcloud CalDAV (tareas y eventos)
-caldav
-icalendar
-
 # Noticias en audio (TTS local)
 piper-tts
 

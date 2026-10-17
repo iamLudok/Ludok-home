@@ -4,12 +4,6 @@
 # Archivos Claude
 .claude/
 
-# Dispositivos conectados a la red
-system/devices.json
-
-# Configuracion del bot
-deploy/ludok-home-bot.service
-
 # Ideas de futuras funcionalidades
 docs/ideas.md
 
@@ -20,5 +14,5 @@ __pycache__/
 # Voces de Piper (se descargan en la instalación)
 voices/
 
-# Salida de depuración del briefing
-briefing.txt
+# Nombres de los dispositivos de la red (de cuando existía /red): datos personales
+system/devices.json
