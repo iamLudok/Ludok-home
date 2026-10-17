@@ -4,17 +4,17 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "================================================"
-echo "  Ludok Home: Private Morning Briefing"
+echo "  Ludok Home: daily news audio on your Pi"
 echo "================================================"
 echo ""
-echo "Requirements: Nextcloud with Calendar, News and Notes apps installed."
-echo "Features: daily briefing with news audio, Telegram bot, wishlist, system monitor, network scanner."
+echo "Requirements: Nextcloud with the News app installed."
+echo "The Pi turns your Nextcloud News feeds into a daily audio for the Ludok Home app."
 
 # ── 1. System dependencies ───────────────────────
 echo ""
 echo "📦 Installing system dependencies..."
 sudo apt-get update -qq
-sudo apt-get install -y python3-pip python3-venv curl nmap ffmpeg
+sudo apt-get install -y python3-pip python3-venv curl ffmpeg
 
 # ── 2. Python virtual environment ───────────────
 echo ""
@@ -27,7 +27,7 @@ pip install -r "$SCRIPT_DIR/requirements.txt" -q
 
 echo "   ✅ Python libraries installed"
 
-# ── Piper voice (news audio) ─────────────────────
+# ── 3. Piper voice (news audio) ──────────────────
 echo ""
 echo "🎧 Downloading Spanish voice for news audio..."
 VOICE_DIR="$SCRIPT_DIR/voices"
@@ -38,13 +38,7 @@ for f in es_ES-davefx-medium.onnx es_ES-davefx-medium.onnx.json; do
 done
 echo "   ✅ Voice ready in $VOICE_DIR"
 
-# ── nmap capabilities (MAC addresses without root) ───
-echo ""
-echo "🔧 Configuring nmap permissions (MAC address scanning)..."
-sudo setcap cap_net_raw+ep "$(which nmap)"
-echo "   ✅ nmap configured"
-
-# ── 3. .env file ─────────────────────────────────
+# ── 4. .env file ─────────────────────────────────
 echo ""
 if [ ! -f "$SCRIPT_DIR/.env" ]; then
     cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
@@ -54,43 +48,15 @@ else
     echo "   ℹ️  .env already exists, skipping"
 fi
 
-# ── 4. Daily briefing cron job ───────────────────
+# ── 5. Daily news cron job ───────────────────────
 echo ""
 echo "⏰ Setting up daily cron job (every day at 7:30)..."
 
-CRON_LINE="30 7 * * * $HOME/ludok-home-env/bin/python3 $SCRIPT_DIR/briefing.py >> $HOME/ludok-home.log 2>&1"
-(crontab -l 2>/dev/null | grep -v "briefing.py"; echo "$CRON_LINE") | crontab -
+CRON_LINE="30 7 * * * $HOME/ludok-home-env/bin/python3 $SCRIPT_DIR/noticias.py >> $HOME/ludok-home.log 2>&1"
+(crontab -l 2>/dev/null | grep -v "noticias.py"; echo "$CRON_LINE") | crontab -
 
 echo "   ✅ Cron configured: every day at 7:30"
 echo "   📝 Logs at: ~/ludok-home.log"
-
-# ── 5. Telegram bot systemd service ─────────────
-echo ""
-echo "🤖 Installing Telegram bot service..."
-
-SERVICE_FILE="/etc/systemd/system/ludok-home-bot.service"
-sudo tee "$SERVICE_FILE" > /dev/null <<EOF
-[Unit]
-Description=Ludok Home Bot: Telegram task and event manager
-After=network.target
-
-[Service]
-User=$USER
-WorkingDirectory=$SCRIPT_DIR
-Environment=PYTHONUNBUFFERED=1
-ExecStart=$HOME/ludok-home-env/bin/python3 -m bot
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable ludok-home-bot
-sudo systemctl start ludok-home-bot
-
-echo "   ✅ Bot service installed and started"
 
 # ── Done ─────────────────────────────────────────
 echo ""
@@ -102,16 +68,8 @@ echo "NEXT STEPS:"
 echo "  1. Edit .env with your credentials:"
 echo "     nano $SCRIPT_DIR/.env"
 echo ""
-echo "  2. Label your network devices (optional):"
-echo "     nano $SCRIPT_DIR/system/devices.json"
+echo "  2. Generate today's news audio by hand to test it:"
+echo "     $HOME/ludok-home-env/bin/python3 $SCRIPT_DIR/noticias.py"
 echo ""
-echo "  3. Test the briefing manually:"
-echo "     source ~/ludok-home-env/bin/activate"
-echo "     python3 $SCRIPT_DIR/briefing.py"
-echo ""
-echo "  4. Use --debug to save the briefing to a file:"
-echo "     python3 $SCRIPT_DIR/briefing.py --debug"
-echo ""
-echo "  5. Check the bot is running:"
-echo "     sudo systemctl status ludok-home-bot"
+echo "  3. Install the Android app (see app/README.md) and set up Nextcloud in its Settings."
 echo ""

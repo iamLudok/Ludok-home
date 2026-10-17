@@ -15,11 +15,8 @@ CONFIG = {
     "nextcloud_url":        os.getenv("NEXTCLOUD_URL"),
     "nextcloud_user":       os.getenv("NEXTCLOUD_USER"),
     "nextcloud_password":   os.getenv("NEXTCLOUD_PASSWORD"),
-    "nextcloud_caldav_url": os.getenv("NEXTCLOUD_CALDAV_URL"),
-
-    # Telegram
-    "telegram_token":       os.getenv("TELEGRAM_TOKEN"),
-    "telegram_chat_id":     os.getenv("TELEGRAM_CHAT_ID"),
+    # Carpeta de tus ficheros donde se dejan las noticias para la app
+    "nextcloud_folder":     os.getenv("NEXTCLOUD_FOLDER", "Ludok Home"),
 
     # Piper (noticias en audio): ruta al modelo de voz .onnx
     "piper_voice":          os.getenv("PIPER_VOICE",

@@ -1,31 +1,10 @@
 # ─────────────────────────────────────────────────────────
-# sources.py: Datos de Nextcloud (agenda, tareas y noticias)
+# sources.py: Noticias de Nextcloud News
 # ─────────────────────────────────────────────────────────
 
 import re
 import requests
 from .config import CONFIG
-from scheduling.tasks import fetch as _fetch_tasks
-from scheduling.events import fetch as _fetch_events
-
-def get_calendar_events():
-    """
-    Devuelve los eventos del calendario de hoy y mañana
-    """
-    print("📅 Leyendo calendario...")
-    events = _fetch_events()
-    print(f"   → {len(events)} eventos")
-    return events
-
-def get_tasks():
-    """
-    Devuelve hasta 20 tareas pendientes de Decs
-    """
-    print("✅ Leyendo tareas...")
-    tasks = _fetch_tasks()
-    print(f"   → {len(tasks)} tareas pendientes")
-    return tasks
-
 
 def _palabras(titulo):
     """Palabras con contenido del titular (descarta las cortas: el, de, que...)."""
