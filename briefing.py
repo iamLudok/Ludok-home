@@ -9,8 +9,7 @@ from datetime import datetime
 from core.config import CONFIG
 from core.sources import get_calendar_events, get_tasks, get_news
 from core.ai import build_briefing
-from core.audio import guion_noticias, generar_audio
-from notes.medicine import resumen_medicinas
+from core.audio import generar_audio_noticias, subir_noticias
 
 def send_telegram(message):
     """
@@ -65,13 +64,15 @@ def main():
     events    = get_calendar_events()
     tasks     = get_tasks()
     articles  = get_news()
-    medicines = resumen_medicinas()
 
     # Paso 2: Noticias en audio (si Piper no está disponible, solo texto)
-    audio = generar_audio(guion_noticias(articles))
+    # Se dejan también en Nextcloud para la app Ludok Home
+    audio, indice = generar_audio_noticias(articles)
+    if audio:
+        subir_noticias(audio, indice)
 
     # Paso 3: Construir el briefing con todos los datos
-    briefing = build_briefing(events, tasks, articles, medicines, con_audio=bool(audio))
+    briefing = build_briefing(events, tasks, articles, con_audio=bool(audio))
 
     # Paso 4 (opcional): guardar el briefing para depuración
     if "--debug" in sys.argv:

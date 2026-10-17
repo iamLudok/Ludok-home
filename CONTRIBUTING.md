@@ -42,12 +42,12 @@ python3 -m bot              # start the Telegram bot in the foreground
   # ─────────────────────────────────────────────────────────
   ```
 - Credentials only come from `.env` through `core/config.py`. Never hardcode tokens, passwords, IPs or personal names.
-- Features that store data use **Nextcloud Notes** through `notes/api.py`. Wrap read-modify-write functions with `@atomico` so concurrent bot commands don't overwrite each other.
+- Personal data (car, medicines, lists) lives in the Android app in `app/`, not in the bot. See [app/README.md](app/README.md).
 - Keep dependencies minimal: Ludok Home has to run comfortably on a Raspberry Pi.
 
 ## Adding a Bot Command
 
-1. Put the logic in the right module (`notes/`, `scheduling/`, `system/`, ...).
+1. Put the logic in the right module (`scheduling/`, `system/`, `core/`, ...).
 2. Add a `cmd_<name>` function in `bot/handlers.py`.
 3. Register it in the `routes` dict inside `handle()`.
 4. Add it to the `AYUDA` help text.

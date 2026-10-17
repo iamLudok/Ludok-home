@@ -9,5 +9,3 @@ icalendar
 # Noticias en audio (TTS local)
 piper-tts
 
-# Gráficos (/graficocoche)
-matplotlib
