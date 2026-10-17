@@ -8,11 +8,13 @@ Thanks for your interest in Ludok Home! It's a personal project, but contributio
 - **Bugs and ideas**: if you found something that doesn't work, or have an idea but don't want to code it, open a public [issue](https://github.com/iamLudok/Ludok-home/issues).
 - **Security vulnerabilities**: never in a public issue. Report them privately as explained in [SECURITY.md](SECURITY.md).
 
-Before posting logs or screenshots, **remove any personal data**: emails, tokens, chat IDs, IP and MAC addresses, Nextcloud URLs.
+Before posting logs or screenshots, **remove any personal data**: emails, tokens, IP addresses, Nextcloud URLs, medicines or expenses.
 
 ## Development Setup
 
-You don't need a Raspberry Pi to develop. Any Linux machine with Python 3.11+ and access to a Nextcloud instance works.
+The project has two parts. The **Android app** in `app/` has its own setup and data-layer checks: see [app/README.md](app/README.md) (`npm run verify`, `npm run typecheck`).
+
+For the **Pi side** you don't need a Raspberry Pi. Any Linux machine with Python 3.11+, `ffmpeg` and access to a Nextcloud instance with the News app works.
 
 ```bash
 git clone https://github.com/iamLudok/Ludok-home.git
@@ -23,18 +25,15 @@ pip install -r requirements.txt
 cp .env.example .env   # fill in your own credentials
 ```
 
-Use a **separate Telegram bot** for testing, so you don't mix it up with your real one.
-
-Run the pieces you're working on:
+Generate the news audio and upload it to your Nextcloud:
 
 ```bash
-python3 briefing.py --debug   # generate the briefing into briefing.txt
-python3 -m bot              # start the Telegram bot in the foreground
+python3 noticias.py
 ```
 
 ## Project Conventions
 
-- **Code comments and bot messages are in Spanish**; the README and docs are in English.
+- **Code comments and app texts are in Spanish**; the README and docs are in English (the app README is in Spanish).
 - Each file starts with a header comment describing what it does:
   ```python
   # ─────────────────────────────────────────────────────────
@@ -42,22 +41,14 @@ python3 -m bot              # start the Telegram bot in the foreground
   # ─────────────────────────────────────────────────────────
   ```
 - Credentials only come from `.env` through `core/config.py`. Never hardcode tokens, passwords, IPs or personal names.
-- Personal data (car, medicines, lists) lives in the Android app in `app/`, not in the bot. See [app/README.md](app/README.md).
+- Personal data (car, medicines, lists, notes) lives in the Android app, never on the Pi.
 - Keep dependencies minimal: Ludok Home has to run comfortably on a Raspberry Pi.
-
-## Adding a Bot Command
-
-1. Put the logic in the right module (`scheduling/`, `system/`, `core/`, ...).
-2. Add a `cmd_<name>` function in `bot/handlers.py`.
-3. Register it in the `routes` dict inside `handle()`.
-4. Add it to the `AYUDA` help text.
-5. Document it in [docs/commands.md](docs/commands.md) and, if it needs explanation, in [docs/features.md](docs/features.md).
 
 ## Pull Requests
 
 - Keep each PR focused on one change.
 - Describe what changed and how you tested it.
-- Update the docs if you add or change a command.
-- Make sure no `.env`, `devices.json` or other personal files are included.
+- Update the docs if you change how something works.
+- Make sure no `.env`, keystore, backups or other personal files are included.
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
