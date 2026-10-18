@@ -60,7 +60,7 @@ def _duracion_wav(ruta):
 
 def generar_audio_noticias(articles):
     """
-    Sintetiza las noticias con Piper y las une en un OGG/Opus (nota de voz de Telegram)
+    Sintetiza las noticias con Piper y las une en un solo OGG/Opus
     Devuelve (bytes del .ogg, índice) o (None, None) si falta Piper, la voz o ffmpeg
     El índice es la lista de noticias con el segundo en que empieza cada una
     """

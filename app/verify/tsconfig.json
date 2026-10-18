@@ -1,0 +1,19 @@
+{
+  // Los scripts de verificación son código de Node, no de React Native: no
+  // pueden heredar la config de Expo (su `customConditions: ["react-native"]`
+  // impide resolver módulos como `node:fs`). Comprueban los mismos ficheros de
+  // src/, solo que en un entorno distinto.
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "lib": ["ESNext"]
+  },
+  "include": ["**/*.ts", "../src/**/*.ts"]
+}

@@ -3,7 +3,7 @@
 # ─────────────────────────────────────────────────────────
 #
 # Se lanza como proceso aparte (python -m core.tts_worker) para poder bajarle
-# la prioridad con nice sin bajársela al resto del briefing, y para que los
+# la prioridad con nice sin bajársela al resto del script, y para que los
 # ~600 MB del modelo se liberen en cuanto termina.
 #
 # Uso: echo '["texto 1", "texto 2"]' | python -m core.tts_worker voz.onnx carpeta/
