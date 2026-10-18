@@ -174,6 +174,16 @@ export interface Settings {
    * copias: quien la tiene controla Docker entero, que es casi ser root en la Pi.
    */
   dockerPassword?: string
+  /** Lo contratado con la operadora, en Mb/s, para saber si el test de la línea llega. */
+  contractDownMbps?: number
+  contractUpMbps?: number
+  /**
+   * Ciudad fija para el tiempo de Hoy («Bilbao»), con sus coordenadas. Sin
+   * ella, el tiempo es el de donde esté el móvil (ubicación aproximada).
+   */
+  weatherPlace?: string
+  weatherLat?: number
+  weatherLon?: number
   schemaVersion: number
 }
 

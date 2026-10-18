@@ -80,12 +80,12 @@ Most assistants send your personal data to external servers. Ludok Home is built
 ## Features
 
 ### Android app (`app/`)
-- ☀️ **Today**: quick notes, medicines still to take, tasks due today or overdue, today's events and a news player that jumps between stories. A reminder at 6:15 (configurable) tells you the news is ready before you leave home
+- ☀️ **Today**: the weather where you are (approximate location) or in a city you choose, from Open-Meteo, with when it will rain and the next 12 hours; quick notes, medicines still to take, tasks due today or overdue, today's events and a news player that jumps between stories. A reminder at 6:15 (configurable) tells you the news is ready before you leave home
 - 🚗 **Car**: fuel, workshop and parts, with a chart that updates as you log, consumption and average price per litre
 - 💊 **Medicines**: schedules, local reminders that work offline and with the app closed, and an adherence calendar (2 weeks or month)
 - 🛒 **Lists**: shopping list you can share on WhatsApp, wishlist and gift ideas with pictures and who each gift is for
 - 🔖 **Saved**: reels, apps, portfolios and websites to check later, with tags. Add them from any app with **Share → Ludok Home**
-- 🖥️ **Server**: your Docker containers grouped by Compose project; start, stop, restart, remove, logs, run a command, generated `docker-compose`, check and apply updates (with automatic rollback if the new one doesn't stay up), change tag, ports in use and image cleanup. Also the Pi's temperature, RAM, disk and load, and the devices on your home network with their vendor and your own names
+- 🖥️ **Server**: your Docker containers grouped by Compose project; start, stop, restart, remove, logs, run a command, generated `docker-compose`, check and apply updates (with automatic rollback if the new one doesn't stay up), change tag, ports in use and image cleanup. A speed test in one tap: the Pi measures the line over its cable (does your ISP deliver what you pay for?) and then the phone measures what reaches it, so you know whether the Wi-Fi is the bottleneck. Also the Pi's temperature, RAM, disk and load, and the devices on your home network with their vendor and your own names
 
 → [App documentation (Spanish)](app/README.md)
 

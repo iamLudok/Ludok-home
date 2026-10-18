@@ -127,6 +127,8 @@ export const radius = {
 
 /** Escala tipográfica. `data` lleva cifras tabulares, para que no bailen. */
 export const type = {
+  /** La cifra grande del test de velocidad, la que va cambiando mientras mide. */
+  hero: { fontSize: 44, fontWeight: '700', letterSpacing: -1, fontVariant: ['tabular-nums'] },
   display: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5 },
   title: { fontSize: 19, fontWeight: '700', letterSpacing: -0.3 },
   section: { fontSize: 15, fontWeight: '600', letterSpacing: -0.1 },

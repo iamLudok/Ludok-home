@@ -198,6 +198,11 @@ export function rowToSettings(r: SettingsRow): Settings {
     newsReminder: u(r.newsReminder),
     dockerUser: u(r.dockerUser),
     dockerPassword: u(r.dockerPassword),
+    contractDownMbps: u(r.contractDownMbps),
+    contractUpMbps: u(r.contractUpMbps),
+    weatherPlace: u(r.weatherPlace),
+    weatherLat: u(r.weatherLat),
+    weatherLon: u(r.weatherLon),
     schemaVersion: r.schemaVersion,
   }
 }
@@ -220,6 +225,11 @@ export function settingsToRow(s: Settings): SettingsInsert {
     newsReminder: n(s.newsReminder),
     dockerUser: n(s.dockerUser),
     dockerPassword: n(s.dockerPassword),
+    contractDownMbps: n(s.contractDownMbps),
+    contractUpMbps: n(s.contractUpMbps),
+    weatherPlace: n(s.weatherPlace),
+    weatherLat: n(s.weatherLat),
+    weatherLon: n(s.weatherLon),
     schemaVersion: s.schemaVersion ?? SCHEMA_VERSION,
   }
 }

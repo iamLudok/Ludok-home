@@ -22,10 +22,12 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
       "blockedPermissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
       "allowBackup": false,
-      "versionCode": 10
+      "versionCode": 13
     },
     "plugins": [
       "expo-router",
@@ -63,6 +65,14 @@
         }
       ],
       "expo-share-intent",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Para el tiempo de donde estás. Solo la ubicación aproximada.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ],
       "expo-image",
       [
         "expo-image-picker",

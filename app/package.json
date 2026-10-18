@@ -15,6 +15,7 @@
     "expo-image-manipulator": "~57.0.21",
     "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.13",
+    "expo-location": "~57.0.21",
     "expo-navigation-bar": "~57.0.3",
     "expo-network": "~57.0.2",
     "expo-notifications": "~57.0.23",
@@ -47,12 +48,15 @@
     "verify:library": "tsx verify/library.ts",
     "verify:migration": "tsx verify/migration.ts",
     "verify:import": "tsx verify/import.ts",
-    "verify": "npm run verify:data && npm run verify:library && npm run verify:migration && npm run verify:import && npm run verify:caldav && npm run verify:links && npm run verify:docker",
+    "verify": "npm run verify:data && npm run verify:library && npm run verify:migration && npm run verify:import && npm run verify:caldav && npm run verify:links && npm run verify:docker && npm run verify:speed && npm run verify:weather",
     "build:apk": "bash scripts/build-apk.sh",
     "verify:caldav": "tsx verify/caldav.ts",
     "verify:links": "tsx verify/links.ts",
     "verify:docker": "tsx verify/docker.ts",
-    "verify:docker-real": "tsx verify/docker-real.ts"
+    "verify:docker-real": "tsx verify/docker-real.ts",
+    "verify:speed": "tsx verify/speed.ts",
+    "verify:speed-real": "tsx verify/speed-real.ts",
+    "verify:weather": "tsx verify/weather.ts"
   },
   "private": true
 }

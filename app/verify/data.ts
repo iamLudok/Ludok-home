@@ -77,6 +77,11 @@ async function seed() {
     nextcloudFolder: 'Ludok Home',
     autoBackup: true,
     notesImportedAt: 1234,
+    contractDownMbps: 600,
+    contractUpMbps: 600,
+    weatherPlace: 'Bilbao',
+    weatherLat: 43.26271,
+    weatherLon: -2.92528,
   })
   return db
 }
@@ -134,6 +139,8 @@ async function main() {
   eq('pero no la contraseña de Docker', restored.dockerPassword, undefined)
   eq('restaura la dirección de casa de Docker', restored.dockerLanUrl, 'http://192.168.1.50:2375')
   eq('restaura el tema', restored.theme, 'dark')
+  eq('restaura la velocidad contratada', `${restored.contractDownMbps}/${restored.contractUpMbps}`, '600/600')
+  eq('restaura la ciudad del tiempo con sus coordenadas', `${restored.weatherPlace} ${restored.weatherLat} ${restored.weatherLon}`, 'Bilbao 43.26271 -2.92528')
   eq('restaura la marca de importación del bot', restored.notesImportedAt, 1234)
   eq('la contraseña no aparece de la nada al restaurar', restored.nextcloudPassword, undefined)
 

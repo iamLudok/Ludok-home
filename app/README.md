@@ -23,12 +23,12 @@ Todo lo demás va después.
 
 | Pestaña | Qué hace | De dónde salen los datos |
 |---|---|---|
-| Hoy | Notas rápidas, medicinas que faltan por tomar, tareas que vencen hoy o están atrasadas, eventos de hoy y el audio de noticias. El engranaje abre Ajustes | Notas y medicinas: el móvil. Tareas y eventos: Nextcloud por CalDAV (los tableros de Deck incluidos). Noticias: la Pi |
+| Hoy | El tiempo, notas rápidas, medicinas que faltan por tomar, tareas que vencen hoy o están atrasadas, eventos de hoy y el audio de noticias. El engranaje abre Ajustes | Tiempo: Open-Meteo. Notas y medicinas: el móvil. Tareas y eventos: Nextcloud por CalDAV (los tableros de Deck incluidos). Noticias: la Pi |
 | Coche | Repostajes, taller y recambios. Gráfico de 6 meses que se actualiza al apuntar, consumo y precio medio | El móvil |
 | Medicinas | Pauta, avisos y registro de adherencia en dos semanas o en mes | El móvil |
 | Listas | Compra (compartir por WhatsApp, vaciar), wishlist y regalos con imagen, y regalos agrupados por persona | El móvil |
 | Guardados | Reels, apps, portfolios y webs para luego, con etiquetas | El móvil |
-| Servidor (icono en Hoy) | Los Docker de la Pi: estado, arrancar/parar/reiniciar/eliminar, logs, comandos, compose, actualizar y cambiar de versión, puertos y limpieza. Arriba, cómo está la Pi y quién hay en la red de casa | La API de Docker de la Pi, por Tailscale o por la WiFi de casa |
+| Servidor (icono en Hoy) | Los Docker de la Pi: estado, arrancar/parar/reiniciar/eliminar, logs, comandos, compose, actualizar y cambiar de versión, puertos, limpieza y test de velocidad. Arriba, cómo está la Pi y quién hay en la red de casa | La API de Docker de la Pi, por Tailscale o por la WiFi de casa |
 
 ### Servidor: los Docker de la Pi
 
@@ -61,6 +61,23 @@ avisos push, ni auto-actualizaciones, ni tareas programadas.
   actualizaciones descargadas sin aplicar. Las reparte en tres grupos y enseña cuáles hay en cada uno:
   versiones viejas de lo que usas (se borran), de apps que ya no tienes en marcha (se borran, sus
   datos se quedan en sus carpetas) y actualizaciones pendientes (no se tocan).
+- **Velocidad**: lo que hace «test de velocidad» en Google, sin Google, y además si la operadora
+  da lo contratado. Con un solo botón, uno detrás de otro (a la vez se repartirían la fibra):
+  - **La línea, por cable**: la mide la Pi, que va al router por cable, que es lo que la operadora
+    se compromete a dar (por WiFi casi siempre llega menos, y no se sabría de quién es la culpa).
+    Se ejecuta dentro del contenedor de la API de Docker, que ya trae `curl` y `ping`, sin instalar
+    nada: 6 conexiones a la vez (con una sola, una fibra rápida no se llena) y cuenta los bytes de
+    la tarjeta de red de la Pi entre el segundo 2 y el 10, sin las cabeceras de red. Tarda unos 25 s.
+  - **Este móvil**, lo que le llega a él ahora: ping, bajada y subida con la cifra en directo, una
+    conexión y peticiones cada vez más grandes, unos 8 s por sentido. Con datos móviles avisa antes,
+    porque con 5G puede gastar cientos de megas.
+  - Las dos contra el servidor de Cloudflare más cercano. Para medir internet hace falta un servidor
+    fuera de casa y no hay forma de evitar a un tercero (el de Google usa M-Lab, que publica cada
+    test con la IP; Cloudflare no). Sin cuenta ni clave: solo ve la IP y bytes de relleno.
+  - La latencia es la mínima, como la de Google, para que las cifras se puedan comparar.
+  - Con la velocidad contratada (se pone en la misma pantalla y va en la copia) dice si la línea
+    cumple, y comparando línea y móvil, si lo que se queda corto es la WiFi. Se guarda el último
+    resultado, no un historial.
 
 `verify/docker-real.ts` prueba todo esto contra un Docker de verdad con un contenedor de usar y
 tirar (incluido que los datos sobreviven a una actualización y que un fallo deja el viejo como
@@ -70,6 +87,31 @@ estaba). No va en `npm run verify` porque necesita la Pi:
 LUDOK_DOCKER_URL=http://100.x.x.x:2375 LUDOK_DOCKER_PASSWORD=… npm run verify:docker-real
 # con LUDOK_DOCKER_LAN_URL=http://192.168.1.x:2375 prueba también la entrada por casa
 ```
+
+`verify/speed-real.ts` hace el test de velocidad de verdad con el mismo código que la app: la línea
+desde la Pi (si se le da la contraseña) y luego el del equipo contra Cloudflare. Gasta unos cientos
+de megas en el equipo y más de un giga en la fibra:
+
+```bash
+LUDOK_DOCKER_URL=http://100.x.x.x:2375 LUDOK_DOCKER_PASSWORD=… npm run verify:speed-real
+```
+
+### El tiempo en Hoy
+
+- Sale de **Open-Meteo**, la fuente por defecto de Breezy Weather (así se ve lo mismo que allí): mezcla
+  los modelos de AEMET, Météo-France y DWD y no pide cuenta ni clave. Breezy no se puede meter dentro
+  de la app (es una app entera, no una librería), pero sus datos sí.
+- Ahora, sensación, máxima y mínima, si va a llover y cuándo («Lluvia probable hacia las 17:00»), las
+  próximas 12 horas y una línea para mañana. Un icono de lluvia con menos de un 30 % de probabilidad no
+  cuenta como lluvia: Open-Meteo da «llovizna» con un 0 % a menudo.
+- **Dónde**: la ubicación **aproximada** del móvil (al kilómetro; el permiso de ubicación precisa está
+  bloqueado en `app.json`) o una ciudad fija, buscada con el buscador de Open-Meteo. El permiso solo se
+  pide al pulsar «Usar mi ubicación», nunca solo. La ciudad fija va en la copia.
+- El nombre del sitio solo sale con ciudad fija: sacarlo de la ubicación lo haría el geocodificador de
+  Android, que por detrás pregunta a Google.
+- Se pide al abrir la app y al volver a ella, solo si la guardada tiene más de media hora o te has
+  movido más de 5 km. Sin conexión se ve la última, sin las horas que ya han pasado.
+- Los iconos son formas (círculos y barras), como los de las pestañas: sin librería ni emojis.
 
 ### Compartir a la app
 
@@ -178,9 +220,12 @@ escritorio (`@libsql/client`). La lógica pide la base a `src/lib/dbRef.ts` en v
 | `verify/migration.ts` | Que actualizar desde la v1 con datos deja el mismo esquema que una instalación nueva |
 | `verify/import.ts` | La importación de las notas del bot, con sus casos raros. Con un JSON de notas reales como argumento, lo prueba también |
 | `verify/caldav.ts` | Leer tareas y eventos de las respuestas de Nextcloud: Deck, alarmas, líneas partidas, días completos |
+| `verify/weather.ts` | El tiempo sin red: leer la previsión de Open-Meteo, textos e iconos, horas que quedan, aviso de lluvia (incluido el caso real de «llovizna» al 0 %), buscador de ciudades y cuándo volver a pedirla |
 | `verify/links.ts` | Vista previa de enlaces: HTML raro, Amazon por ASIN, lo que comparte Instagram, quitar el rastreo |
 | `verify/docker.ts` | Docker sin red: estado, flujo binario de logs/exec, actualizaciones, recrear sin perder nada, compose, puertos, qué imágenes se pueden borrar, estado de la Pi, red de casa (amplificador incluido) y por dónde se llega a la Pi |
 | `verify/docker-real.ts` | Lo mismo contra la Pi de verdad, con un contenedor de usar y tirar. No va en `npm run verify` (ver «Servidor») |
+| `verify/speed.ts` | Test de velocidad sin red: tamaño de cada petición, velocidad, ping y jitter, el test entero contra una línea falsa de velocidad conocida, errores y límites del servidor, leer lo que mide la Pi y las conclusiones (si la línea cumple, si es la WiFi) |
+| `verify/speed-real.ts` | El test de verdad: la línea desde la Pi y el equipo contra Cloudflare. No va en `npm run verify` |
 
 ## Estructura
 

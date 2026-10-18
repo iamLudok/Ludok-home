@@ -169,6 +169,8 @@ export default function Servidor() {
       <Screen title="Servidor" right={<Button title="Volver" kind="ghost" small onPress={() => router.back()} />}>
         <Empty text="Configura la conexión con Docker de la Pi en Ajustes (dirección y contraseña).">
           <Button title="Ir a Ajustes" kind="primary" onPress={() => router.navigate('/ajustes')} />
+          {/* El test de internet no necesita Docker: que se pueda usar igual. */}
+          <Button title="Test de velocidad" onPress={() => router.navigate('/servidor/velocidad')} />
         </Empty>
       </Screen>
     )
@@ -241,6 +243,7 @@ export default function Servidor() {
           <Button title={checking ? 'Buscando…' : 'Buscar actualizaciones'} small onPress={checkUpdates} disabled={checking || !list} />
           <Button title="Puertos" small onPress={() => router.navigate('/servidor/puertos')} />
           <Button title="Limpieza" small onPress={() => router.navigate('/servidor/limpieza')} />
+          <Button title="Velocidad" small onPress={() => router.navigate('/servidor/velocidad')} />
         </View>
 
         {selecting ? (

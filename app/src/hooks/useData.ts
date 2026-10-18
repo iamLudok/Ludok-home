@@ -12,6 +12,8 @@ import { db } from '../lib/db'
 import { cache, carExpenses, deviceNames, intakes, listItems, medicines, quickNotes, savedLinks } from '../lib/schema'
 import { rowToCarExpense, rowToIntake, rowToListItem, rowToMedicine, rowToQuickNote, rowToSavedLink } from '../lib/rows'
 import { TODAY_CACHE_KEY } from '../lib/today'
+import { WEATHER_CACHE_KEY } from '../lib/weather/weather'
+import type { CachedWeather } from '../lib/weather/core'
 import type { TodayData } from '../lib/nextcloud'
 import type { CarExpense, ListItem, ListKind, Medicine, MedicineIntake, QuickNote, SavedLink } from '../types'
 
@@ -65,6 +67,21 @@ export function useSaved(): Query<SavedLink[]> {
 export function useDeviceNames(): Query<Record<string, string>> {
   const { data, updatedAt } = useLiveQuery(db.select().from(deviceNames))
   return { data: useMemo(() => Object.fromEntries(data.map((d) => [d.mac, d.name])), [data]), ready: updatedAt !== undefined }
+}
+
+/** La última previsión guardada, o null si nunca se ha traído. */
+export function useWeatherCache(): Query<{ value: CachedWeather; fetchedAt: number } | null> {
+  const { data, updatedAt } = useLiveQuery(db.select().from(cache).where(eq(cache.key, WEATHER_CACHE_KEY)))
+  const parsed = useMemo(() => {
+    const row = data[0]
+    if (!row) return null
+    try {
+      return { value: JSON.parse(row.value) as CachedWeather, fetchedAt: row.fetchedAt }
+    } catch {
+      return null
+    }
+  }, [data])
+  return { data: parsed, ready: updatedAt !== undefined }
 }
 
 /** Lo último que se trajo de Nextcloud para la pestaña Hoy, o null si nunca. */

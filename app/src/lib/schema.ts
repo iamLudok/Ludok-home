@@ -95,6 +95,11 @@ export const settings = sqliteTable('settings', {
   newsReminder: text('newsReminder'),
   dockerUser: text('dockerUser'),
   dockerPassword: text('dockerPassword'),
+  contractDownMbps: integer('contractDownMbps'),
+  contractUpMbps: integer('contractUpMbps'),
+  weatherPlace: text('weatherPlace'),
+  weatherLat: real('weatherLat'),
+  weatherLon: real('weatherLon'),
   schemaVersion: integer('schemaVersion').notNull(),
 })
 

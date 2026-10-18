@@ -144,6 +144,10 @@ async function main() {
   const newsCol = await old.execute("SELECT newsReminder FROM settings WHERE id = 'app'")
   check('y el aviso de noticias, vacío (que significa «a la hora por defecto»)', newsCol.rows[0][0] === null)
   eq('existe la tabla de nombres de dispositivos', await count('device_names'), 0)
+  const contract = await old.execute("SELECT contractDownMbps, contractUpMbps FROM settings WHERE id = 'app'")
+  check('y la velocidad contratada, vacía', contract.rows[0][0] === null && contract.rows[0][1] === null)
+  const place = await old.execute("SELECT weatherPlace, weatherLat, weatherLon FROM settings WHERE id = 'app'")
+  check('y la ciudad del tiempo, vacía (el tiempo de donde estés)', [0, 1, 2].every((i) => place.rows[0][i] === null))
   const pwd = await old.execute("SELECT nextcloudPassword FROM settings WHERE id = 'app'")
   eq('se conserva la contraseña de Nextcloud', String(pwd.rows[0][0]), 'secreta')
 

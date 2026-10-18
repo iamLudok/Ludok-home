@@ -92,6 +92,11 @@ CREATE TABLE IF NOT EXISTS settings (
   newsReminder TEXT,
   dockerUser TEXT,
   dockerPassword TEXT,
+  contractDownMbps INTEGER,
+  contractUpMbps INTEGER,
+  weatherPlace TEXT,
+  weatherLat REAL,
+  weatherLon REAL,
   schemaVersion INTEGER NOT NULL
 );
 
@@ -159,6 +164,13 @@ export const MIGRATIONS: string[] = [
      mac TEXT PRIMARY KEY NOT NULL,
      name TEXT NOT NULL
    );`,
+  // v6 → v7: velocidad contratada, para el test de la línea.
+  `ALTER TABLE settings ADD COLUMN contractDownMbps INTEGER;
+   ALTER TABLE settings ADD COLUMN contractUpMbps INTEGER;`,
+  // v7 → v8: ciudad fija para el tiempo de Hoy.
+  `ALTER TABLE settings ADD COLUMN weatherPlace TEXT;
+   ALTER TABLE settings ADD COLUMN weatherLat REAL;
+   ALTER TABLE settings ADD COLUMN weatherLon REAL;`,
 ]
 
 /** Versión actual del esquema local. */

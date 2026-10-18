@@ -237,6 +237,13 @@ export async function importBackup(
       dockerLanUrl: parsed.settings.dockerLanUrl || current.dockerLanUrl,
       newsReminder: parsed.settings.newsReminder || current.newsReminder,
       dockerUser: parsed.settings.dockerUser || current.dockerUser,
+      contractDownMbps: parsed.settings.contractDownMbps || current.contractDownMbps,
+      contractUpMbps: parsed.settings.contractUpMbps || current.contractUpMbps,
+      // La ciudad va entera o no va: un nombre con las coordenadas de otra
+      // daría el tiempo de un sitio con el nombre de otro.
+      ...(parsed.settings.weatherPlace && parsed.settings.weatherLat != null && parsed.settings.weatherLon != null
+        ? { weatherPlace: parsed.settings.weatherPlace, weatherLat: parsed.settings.weatherLat, weatherLon: parsed.settings.weatherLon }
+        : {}),
       id: 'app',
     })
   }

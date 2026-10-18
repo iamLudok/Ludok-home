@@ -11,6 +11,7 @@ import { BackupBanner } from '../../src/components/BackupBanner'
 import { NewsPlayer } from '../../src/components/NewsPlayer'
 import { TodayMedicines } from '../../src/components/TodayMedicines'
 import { QuickNotes } from '../../src/components/QuickNotes'
+import { WeatherCard } from '../../src/components/WeatherCard'
 import { useIntakes, useMedicines, useTodayCache, useCarExpenses, useNotes } from '../../src/hooks/useData'
 import { useSettingsQuery } from '../../src/hooks/useSettings'
 import { useSync } from '../../src/hooks/useSync'
@@ -21,8 +22,8 @@ import { configFrom } from '../../src/lib/nextcloud'
 import { clock, longDate, shortDate, whenFetched } from '../../src/lib/format'
 
 /**
- * Lo que antes era el briefing de las 7:30 en Telegram: medicinas, tareas,
- * eventos y noticias de hoy, en una sola pantalla.
+ * Lo que antes era el briefing de las 7:30 en Telegram: el tiempo, medicinas,
+ * tareas, eventos y noticias de hoy, en una sola pantalla.
  */
 export default function Hoy() {
   const day = useToday()
@@ -92,6 +93,8 @@ export default function Hoy() {
             <Button title="Ir a Ajustes" small onPress={() => router.navigate('/ajustes')} style={styles.selfStart} />
           </Card>
         ) : null}
+
+        <WeatherCard />
 
         <Card>
           <SectionTitle title="Notas" />

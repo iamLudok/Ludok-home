@@ -1,5 +1,6 @@
 // Lo que se hace al abrir la app y al volver a ella: copia a Nextcloud, tareas
-// y eventos de hoy, noticias de la Pi y reprogramar los avisos de medicinas.
+// y eventos de hoy, noticias de la Pi, el tiempo y reprogramar los avisos de
+// medicinas.
 //
 // Nada de esto va en segundo plano (Android mata esas tareas sin avisar). Cada
 // paso falla por su cuenta sin tumbar a los demás: sin conexión, la copia y las
@@ -10,6 +11,7 @@ import { maybeAutoBackup } from '../lib/autoBackup'
 import { refreshToday } from '../lib/today'
 import { localNews, syncNews, type LocalNews } from '../lib/news'
 import { syncMedicineReminders } from '../lib/notifications'
+import { refreshWeather } from '../lib/weather/weather'
 
 export interface SyncState {
   refreshing: boolean
@@ -44,6 +46,8 @@ export function SyncProvider({ enabled, children }: { enabled: boolean; children
         refreshToday(),
         syncNews(),
         syncMedicineReminders().catch(() => 0),
+        // Solo si la guardada tiene más de media hora o te has movido: ver `needsRefresh`.
+        refreshWeather(),
         maybeAutoBackup().catch(() => null),
       ])
       if ('news' in newsResult) setNews(newsResult.news)

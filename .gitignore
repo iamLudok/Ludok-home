@@ -19,3 +19,4 @@ system/devices.json
 
 # La config real de la API de Docker lleva el hash de la contraseña: solo se sube el .example
 deploy/docker-api/Caddyfile
+/medicinas/
