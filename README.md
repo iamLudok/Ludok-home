@@ -2,18 +2,19 @@
 
 # Ludok Home
 
-**Your private morning briefing, self-hosted on a Raspberry Pi.**
+**Your private home organizer: an Android app plus a Raspberry Pi.**
 
-Calendar, tasks, medicines and news (as a voice note), delivered to Telegram every morning.<br>
-Your data lives on your own hardware. No subscriptions. No AI cloud services.
+Today's tasks, medicines, car expenses, lists, things to check later, and the day's news as audio.<br>
+Your data lives on your own hardware. No accounts. No subscriptions. No AI cloud services.
 
 [![License: MIT](https://img.shields.io/github/license/iamLudok/Ludok-home?style=flat-square&color=blue)](LICENSE)
+[![Android](https://img.shields.io/badge/Android-app-3DDC84?style=flat-square&logo=android&logoColor=white)](app/README.md)
+[![Expo SDK 57](https://img.shields.io/badge/Expo-SDK%2057-000020?style=flat-square&logo=expo&logoColor=white)](https://docs.expo.dev/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-4%20%7C%205-A22846?style=flat-square&logo=raspberrypi&logoColor=white)](https://www.raspberrypi.com/)
 [![Nextcloud](https://img.shields.io/badge/Nextcloud-self--hosted-0082C9?style=flat-square&logo=nextcloud&logoColor=white)](https://nextcloud.com/)
-[![Telegram Bot](https://img.shields.io/badge/Telegram-bot-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://core.telegram.org/bots)
 
-[Features](#features) · [Installation](#installation) · [Commands](docs/commands.md) · [Docs](docs/features.md) · [License](#license)
+[Features](#features) · [Installation](#installation) · [App docs](app/README.md) · [News audio](docs/features.md) · [License](#license)
 
 </div>
 
@@ -22,12 +23,13 @@ Your data lives on your own hardware. No subscriptions. No AI cloud services.
 ## Table of Contents
 
 - [Why Ludok Home?](#why-ludok-home)
-- [Tech Stack](#tech-stack)
+- [How it fits together](#how-it-fits-together)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Project Structure](#project-structure)
-- [Cron & Services](#cron--services)
+- [Cron & Logs](#cron--logs)
+- [History](#history)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -37,139 +39,103 @@ Your data lives on your own hardware. No subscriptions. No AI cloud services.
 
 Most assistants send your personal data to external servers. Ludok Home is built around a different principle: **your data stays yours**.
 
-- 🏠 **Self-hosted data**: Nextcloud stores your calendar, tasks, notes, and news feeds on hardware you own and control.
-- 🔒 **Local processing**: the briefing is built on the Pi, the news audio is synthesized locally with Piper. No data is sent to AI or analytics providers.
-- 💸 **No subscriptions**: once set up, Ludok Home runs for free indefinitely.
+- 📱 **Local-first app**: medicines, car expenses, lists and notes live in SQLite on your phone, with a daily JSON backup to your own Nextcloud. Android's Google Drive backup is turned off on purpose.
+- 🏠 **Self-hosted everything else**: tasks and events come from your Nextcloud (CalDAV, Deck boards included); the news comes from your Nextcloud News feeds.
+- 🔒 **Local processing**: the news audio is synthesized on the Pi with Piper. No data is sent to AI or analytics providers.
+- 🌍 **Away from home over Tailscale**: the app talks to the same address; nothing is exposed to the internet.
 
-> **What does leave your network:** the briefing, news audio and bot replies are delivered through Telegram's servers (bot chats are not end-to-end encrypted). Everything else (calendar, tasks, notes, news) stays on your Nextcloud.
+> **What does leave your network:** link previews. When you save a link, the phone fetches that page to get its picture and title, as any browser would.
 
 ---
 
-## Tech Stack
+## How it fits together
+
+```
+ Nextcloud News ──► Raspberry Pi (7:30, cron) ──► noticias.ogg + noticias.json
+                     Piper TTS, runs locally          in your Nextcloud
+                                                            │
+ Nextcloud Deck / Calendar (CalDAV) ───────────────────────┤
+                                                            ▼
+                                        Ludok Home app (Android, SQLite)
+                                                            │
+                                     daily backup JSON ─────┘ back to Nextcloud
+```
 
 | Layer | Technology | Role |
 |---|---|---|
-| Self-hosted data | Nextcloud | Calendar, tasks, news feeds, notes |
-| Text to speech | Piper | Reads the news aloud, runs locally |
-| Delivery | Telegram Bot | Sends the briefing and accepts commands |
-| Runtime | Raspberry Pi 4/5 | Runs the whole stack, 24/7 |
+| App | Expo SDK 57, expo-router, SQLite | Everything you touch: Today, Car, Medicines, Lists, Saved |
+| Self-hosted data | Nextcloud | Tasks, events, news feeds, backups and the daily audio |
+| Text to speech | Piper | Reads the news aloud on the Pi, runs locally |
+| Runtime | Raspberry Pi 4/5 | Runs Nextcloud and the daily news job |
 
 ---
 
 ## Features
 
-### Daily Briefing (automatic, every morning at 7:30)
-- 📅 **Calendar**: events for today and tomorrow
-- ✅ **Pending tasks**: most urgent ones highlighted
-- 📰 **News**: the top headlines from your Nextcloud News feeds, plus a voice note that reads every article aloud
-- 💊 **Medicines**: which ones to take today and at what time
+### Android app (`app/`)
+- ☀️ **Today**: quick notes, medicines still to take, tasks due today or overdue, today's events and a news player that jumps between stories
+- 🚗 **Car**: fuel, workshop and parts, with a chart that updates as you log, consumption and average price per litre
+- 💊 **Medicines**: schedules, local reminders that work offline and with the app closed, and an adherence calendar (2 weeks or month)
+- 🛒 **Lists**: shopping list you can share on WhatsApp, wishlist and gift ideas with pictures and who each gift is for
+- 🔖 **Saved**: reels, apps, portfolios and websites to check later, with tags. Add them from any app with **Share → Ludok Home**
 
-### Telegram Bot (always on, responds instantly)
-- 🗂️ **Organize**: manage tasks, calendar events, medicines, shopping list, car expenses, wishlist, and gift ideas directly from Telegram
-- ⏰ **Reminders**: a notification 30 minutes before every calendar event, and medicine reminders with a one-tap ✅ button
-- 🖥️ **System health**: automatic alerts for high CPU temperature, RAM, or disk usage, plus a network device scanner
+→ [App documentation (Spanish)](app/README.md)
 
-The bot only answers your own `TELEGRAM_CHAT_ID`; messages from anyone else are ignored.
+### Raspberry Pi
+- 📰 **Daily news audio**: every morning at 7:30 the Pi reads your Nextcloud News feeds (2 stories per feed, near-duplicates removed), turns them into speech with Piper and leaves the audio with its story index in Nextcloud
 
-→ [Full command reference](docs/commands.md)  
-→ [Feature documentation](docs/features.md)
+→ [News audio details](docs/features.md)
 
 ---
 
 ## Requirements
 
 ### Hardware
-- Raspberry Pi 4 or 5 (8 GB RAM recommended)
+- Raspberry Pi 4 or 5 (8 GB RAM recommended), running Nextcloud
+- An Android phone
 
 ### Nextcloud apps
-- **Calendar**: for CalDAV events and tasks
-- **News**: for RSS feed summaries
-- **Notes**: for shopping list, car expenses, wishlist, gift ideas, and medicine tracking
+- **News**: the feeds for the daily audio
+- **Calendar** / **Deck**: tasks and events shown in Today
+- **Files**: backups and the daily audio go to a `Ludok Home` folder
 
 ### Other
-- A Telegram account to create a bot
-- `nmap` and `ffmpeg` installed on the Pi (installed by `setup.sh`)
+- `ffmpeg` on the Pi (installed by `setup.sh`)
 - ~65 MB for the Spanish Piper voice, downloaded by `setup.sh` into `voices/`
+- [Tailscale](https://tailscale.com/) on the Pi and the phone, to use the app away from home (optional)
 
 ---
 
 ## Installation
 
-### 1. Clone the repository
+### 1. On the Raspberry Pi
 
 ```bash
 git clone https://github.com/iamLudok/Ludok-home.git ~/Ludok-home
 cd ~/Ludok-home
-```
-
-### 2. Run the setup script
-
-```bash
 bash deploy/setup.sh
-```
-
-This installs system dependencies, creates a Python virtual environment, installs the packages from `requirements.txt`, configures the daily cron job at 7:30, and installs the Telegram bot as a systemd service.
-
-> **Security note:** so that `/red` can do a full ARP scan without running as root, the script grants `nmap` the `cap_net_raw` capability. This lets **any user on the Pi** run raw network scans. That's fine on a single-user Pi; on a shared machine, revert it with `sudo setcap -r "$(which nmap)"`. `/red` keeps working, but unprivileged `nmap` may miss devices that don't answer TCP probes.
-
-### 3. Configure your credentials
-
-```bash
-cp .env.example .env
 nano .env
 ```
+
+`setup.sh` installs `ffmpeg`, creates a Python virtual environment, downloads the Piper voice and sets up the daily cron job at 7:30.
 
 | Variable | Description |
 |---|---|
 | `NEXTCLOUD_URL` | Your Nextcloud URL, e.g. `http://192.168.1.50:8080` |
 | `NEXTCLOUD_USER` | Your Nextcloud username |
 | `NEXTCLOUD_PASSWORD` | A Nextcloud [app password](https://docs.nextcloud.com/server/latest/user_manual/en/session_management.html#managing-devices), not your account password |
-| `NEXTCLOUD_CALDAV_URL` | Usually `NEXTCLOUD_URL/remote.php/dav` |
-| `TELEGRAM_TOKEN` | Your Telegram bot token |
-| `TELEGRAM_CHAT_ID` | Your Telegram chat ID |
-| `PIPER_VOICE` | Optional: path to another Piper voice `.onnx` (default `voices/es_ES-davefx-medium.onnx`) |
+| `NEXTCLOUD_FOLDER` | Optional: folder for the daily audio (default `Ludok Home`) |
+| `PIPER_VOICE` | Optional: path to another Piper voice `.onnx` |
 
-### 4. Telegram Bot
-
-1. Open Telegram and search for **@BotFather**
-2. Send `/newbot` and follow the steps
-3. Copy the token into `.env` → `TELEGRAM_TOKEN`
-4. Send any message to your new bot, then open:  
-   `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates`
-5. Find `"id"` inside `"chat"`. That's your `TELEGRAM_CHAT_ID`
-
-### 5. Register bot commands
-
-This makes Telegram show the command menu when you type `/` in the chat.  
-Run `setMyCommands` once with whichever commands you want to expose (replace `<YOUR_TOKEN>`):
+Test it once by hand:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setMyCommands" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commands": [
-      {"command": "ayuda", "description": "Muestra todos los comandos"},
-      {"command": "tareas", "description": "Lista tus tareas pendientes"}
-    ]
-  }'
+~/ludok-home-env/bin/python3 ~/Ludok-home/noticias.py
 ```
 
-Full list of available commands: `/ayuda` inside the bot or [docs/commands.md](docs/commands.md).  
-You only need to do this once. The commands persist on Telegram's side and survive bot restarts.
+### 2. The Android app
 
-### 6. Test it
-
-```bash
-source ~/ludok-home-env/bin/activate
-python3 briefing.py
-```
-
-Use `--debug` to save the generated briefing to a file:
-
-```bash
-python3 briefing.py --debug
-cat briefing.txt
-```
+Build and install the signed APK as explained in [app/README.md](app/README.md), then in the app go to **Settings → Nextcloud** and enter the same server, user and app password.
 
 ---
 
@@ -177,52 +143,37 @@ cat briefing.txt
 
 ```
 Ludok-home/
-├── .env.example            ← Template for .env
-├── .gitignore              ← Excludes files from git
-├── LICENSE                 ← MIT license
-├── briefing.py             ← Daily briefing script (runs via cron)
-├── README.md               ← Project documentation
-├── requirements.txt        ← Python dependencies
-├── bot/
-│   ├── __main__.py         ← Telegram polling and background threads
-│   ├── background.py       ← Background alerts
-│   └── handlers.py         ← Telegram bot command handlers
+├── app/                    ← Android app (Expo), see app/README.md
 ├── core/
-│   ├── ai.py               ← Builds the briefing text
-│   ├── audio.py            ← News voice note (Piper TTS)
+│   ├── audio.py            ← News audio with Piper, uploaded to Nextcloud
 │   ├── config.py           ← Reads .env and exposes CONFIG
-│   └── sources.py          ← Data collection (calendar, tasks, news)
+│   ├── sources.py          ← Nextcloud News: 2 per feed, no near-duplicates
+│   └── tts_worker.py       ← Synthesizes each story separately (runs with nice)
 ├── deploy/
-│   └── setup.sh            ← Automated installation script
+│   └── setup.sh            ← Pi installation script
 ├── docs/
-│   ├── commands.md         ← Full Telegram command reference
-│   └── features.md         ← Feature documentation
-├── notes/
-│   ├── api.py              ← Nextcloud Notes interface
-│   ├── car.py              ← Car expenses
-│   ├── gifts.py            ← Gift ideas list
-│   ├── medicine.py         ← Medicine tracking
-│   ├── shopping.py         ← Shopping list
-│   └── wishlist.py         ← Wishlist
-├── scheduling/
-│   ├── events.py           ← Event CRUD (Nextcloud CalDAV)
-│   └── tasks.py            ← Task CRUD (Nextcloud CalDAV)
-└── system/
-    ├── monitor.py          ← System monitor (CPU temp, RAM, disk, uptime)
-    └── network.py          ← Network device scanner
+│   └── features.md         ← News audio details
+├── logo/                   ← App icon sources
+├── noticias.py             ← Daily news job (runs via cron)
+├── requirements.txt        ← Python dependencies
+├── .env.example            ← Template for .env
+└── LICENSE                 ← MIT license
 ```
 
 ---
 
-## Cron & Services
+## Cron & Logs
 
 ```bash
-crontab -l                                     # daily briefing schedule
-sudo systemctl status ludok-home-bot           # Telegram bot service
-
-cat ~/ludok-home.log                           # daily briefing logs
-journalctl -u ludok-home-bot -n 50 --no-pager  # bot logs
+crontab -l                 # daily news schedule
+cat ~/ludok-home.log       # daily news logs
 ```
+
+---
+
+## History
+
+Ludok Home started as **Ludext**, a Telegram bot with a morning briefing. In October 2026 everything moved to the Android app: Telegram was a third party in the middle of every message, and typing `/gasolina 40 1.65` was worse than a form. The bot, the Gmail reader and the CLIP photo search were removed; their code is still in the git history.
 
 ---
 
