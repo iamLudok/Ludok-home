@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="app/assets/icon.png" alt="Ludok Home icon" width="96">
+
 # Ludok Home
 
 **Your private home organizer: an Android app plus a Raspberry Pi.**
