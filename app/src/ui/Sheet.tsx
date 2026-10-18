@@ -1,4 +1,5 @@
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Keyboard, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePalette } from './ThemeProvider'
 import { Txt } from './Text'
@@ -25,14 +26,16 @@ export function Sheet({
 }) {
   const palette = usePalette()
   const insets = useSafeAreaInsets()
+  const keyboard = useKeyboardHeight()
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={[styles.root, { paddingBottom: keyboard }]}>
         <Pressable style={[styles.scrim, { backgroundColor: palette.scrim }]} onPress={onClose} accessibilityLabel="Cerrar" />
         <View
           style={[
             styles.sheet,
-            { backgroundColor: palette.surface, borderColor: palette.line, paddingBottom: insets.bottom + space.lg },
+            // Con el teclado abierto, la barra de gestos ya queda debajo de él.
+            { backgroundColor: palette.surface, borderColor: palette.line, paddingBottom: (keyboard ? 0 : insets.bottom) + space.lg },
           ]}
         >
           <View style={[styles.grip, { backgroundColor: palette.line }]} />
@@ -41,7 +44,7 @@ export function Sheet({
             {children}
           </ScrollView>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   )
 }
@@ -61,3 +64,21 @@ const styles = StyleSheet.create({
   grip: { alignSelf: 'center', width: 36, height: 4, borderRadius: radius.pill },
   body: { gap: space.md, paddingBottom: space.sm },
 })
+
+/**
+ * Altura del teclado, para subir la hoja por encima. No vale KeyboardAvoidingView:
+ * con la pantalla de borde a borde de Android (la de Expo 57) no hace nada, y
+ * la casilla en la que escribías se quedaba debajo del teclado sin que se viera.
+ */
+function useKeyboardHeight(): number {
+  const [height, setHeight] = useState(0)
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardDidShow', (e) => setHeight(e.endCoordinates.height))
+    const hide = Keyboard.addListener('keyboardDidHide', () => setHeight(0))
+    return () => {
+      show.remove()
+      hide.remove()
+    }
+  }, [])
+  return height
+}

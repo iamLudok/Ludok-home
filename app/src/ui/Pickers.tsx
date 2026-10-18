@@ -65,7 +65,10 @@ export function TimePicker({ label, value, onChange }: { label: string; value: T
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.xs, flex: 1 },
+  // flexGrow y no flex: 1. En una fila (casilla + botón) ocupa el hueco que
+  // queda; en una columna, flex: 1 deja la base en 0 y la casilla se quedaba
+  // sin altura, escribiendo sin que se viera nada.
+  wrap: { gap: space.xs, flexGrow: 1, flexShrink: 1 },
   button: {
     borderWidth: 1,
     borderRadius: radius.md,
