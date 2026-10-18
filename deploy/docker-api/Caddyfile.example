@@ -1,0 +1,26 @@
+# Copia este fichero como Caddyfile y cambia el hash por el de tu contraseña:
+#   docker run --rm caddy:2-alpine caddy hash-password --plaintext 'tu-contraseña'
+# En 127.0.0.1 (de ahí lo publica `tailscale serve`, ver el compose) y en la IP
+# de casa de la Pi, para usar la app con la WiFi de casa sin Tailscale. Esa IP
+# tiene que ser fija (cambia 192.168.1.50 por la de tu Pi, o quítala si solo
+# quieres Tailscale); NUNCA 0.0.0.0, que incluiría cualquier red que se le añada.
+# `bind` decide dónde escucha; la dirección del sitio solo es para reconocer
+# peticiones, y con un nombre concreto las que llegan por Tailscale no casarían.
+# Sin panel de administración: por defecto Caddy abre uno en 127.0.0.1:2019
+# desde el que cualquier proceso de la Pi podría cambiar la config y quitar la
+# contraseña.
+{
+	admin off
+}
+
+:2375 {
+	bind 127.0.0.1 192.168.1.50
+	basic_auth {
+		ludok $2a$14$CAMBIA_ESTE_HASH
+	}
+	# flush_interval -1: los logs y la salida de exec llegan según salen, sin
+	# esperar a que Caddy llene su búfer.
+	reverse_proxy unix//var/run/docker.sock {
+		flush_interval -1
+	}
+}

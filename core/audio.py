@@ -142,7 +142,40 @@ def subir_noticias(audio, resumen):
                      data=json.dumps(resumen, ensure_ascii=False, indent=2).encode("utf-8"),
                      headers={"Content-Type": "application/json"}).raise_for_status()
         print("   ✅ Noticias subidas")
+        for nombre in ("noticias.ogg", "noticias.json"):
+            _borrar_versiones(f"{carpeta}/{nombre}", auth)
         return True
     except Exception as e:
         print(f"   ⚠️  Error subiendo noticias: {e}")
         return False
+
+def _borrar_versiones(url_fichero, auth):
+    """
+    Borra las versiones antiguas que guarda Nextcloud al sobrescribir el fichero
+    Sin esto se acumulaban: una al día durante un mes y luego una por semana
+    para siempre, y nadie va a escuchar las noticias de hace meses
+    Si falla no pasa nada: las noticias ya están subidas
+    """
+    try:
+        r = requests.request("PROPFIND", url_fichero, auth=auth, timeout=30,
+                             headers={"Depth": "0", "Content-Type": "application/xml"},
+                             data='<?xml version="1.0"?><d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">'
+                                  '<d:prop><oc:fileid/></d:prop></d:propfind>')
+        fileid = re.search(r"<oc:fileid>(\d+)</oc:fileid>", r.text)
+        if not fileid:
+            return
+        base = CONFIG["nextcloud_url"]
+        versiones = f"{base}/remote.php/dav/versions/{CONFIG['nextcloud_user']}/versions/{fileid.group(1)}"
+        r = requests.request("PROPFIND", versiones, auth=auth, timeout=30, headers={"Depth": "1"})
+        hrefs = re.findall(r"<d:href>([^<]+)</d:href>", r.text)
+        borradas = 0
+        for href in hrefs:
+            # El primero es la propia carpeta de versiones, no una versión
+            if href.rstrip("/").endswith(f"/versions/{fileid.group(1)}"):
+                continue
+            if requests.delete(base + href, auth=auth, timeout=30).status_code in (200, 204):
+                borradas += 1
+        if borradas:
+            print(f"   🧹 {borradas} versiones viejas de {url_fichero.rsplit('/', 1)[1]} borradas")
+    except Exception as e:
+        print(f"   ⚠️  No se pudieron borrar las versiones viejas: {e}")

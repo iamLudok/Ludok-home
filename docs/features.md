@@ -1,6 +1,6 @@
 # News Audio
 
-Every morning at 7:30 the Pi turns your Nextcloud News feeds into a short audio for the Ludok Home app. Everything runs locally: the speech is synthesized with [Piper](https://github.com/OHF-Voice/piper1-gpl) on the Pi.
+Every morning at 5:45 the Pi turns your Nextcloud News feeds into a short audio for the Ludok Home app. Everything runs locally: the speech is synthesized with [Piper](https://github.com/OHF-Voice/piper1-gpl) on the Pi.
 
 ## What it does
 
@@ -8,6 +8,7 @@ Every morning at 7:30 the Pi turns your Nextcloud News feeds into a short audio 
 2. Keeps **2 stories per feed** (`max_per_feed` in `get_news()`) and drops near-duplicates: two headlines count as the same story when most of their meaningful words match, so a story republished with a slightly different headline, or told by two feeds, is read only once.
 3. Synthesizes each story separately ([core/tts_worker.py](../core/tts_worker.py)), so it knows the second at which each one starts, then joins them into a single OGG/Opus file with `ffmpeg`.
 4. Uploads `noticias.ogg` and then `noticias.json` to the `Ludok Home` folder of your Nextcloud files. The audio goes first: if the upload fails halfway, the app never sees a new index pointing to an old audio.
+5. Deletes the old versions Nextcloud keeps of those two files when they are overwritten. Otherwise one would pile up every day for a month and then one a week forever, and nobody listens to last month's news.
 
 `noticias.json` looks like this:
 
@@ -22,7 +23,7 @@ Every morning at 7:30 the Pi turns your Nextcloud News feeds into a short audio 
 }
 ```
 
-The app downloads both files to the phone as soon as it can reach Nextcloud, so you can listen without coverage, and uses `inicio` to jump between stories.
+The app downloads both files to the phone as soon as it can reach Nextcloud, so you can listen without coverage, and uses `inicio` to jump between stories. At 6:15 (configurable in the app) a local notification says the news is ready: tapping it before leaving home opens the app, which downloads the audio over the home Wi-Fi.
 
 ## Resources
 

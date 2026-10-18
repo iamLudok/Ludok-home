@@ -1,0 +1,29 @@
+# API de Docker para la pantalla «Servidor» de la app Ludok Home.
+#
+# Caddy hace de portero delante del socket de Docker: pide usuario y
+# contraseña y escucha en 127.0.0.1 y en la IP fija de casa de la Pi (ver el
+# Caddyfile). A la red de Tailscale se publica con
+#   tailscale serve --bg --tcp 2375 tcp://127.0.0.1:2375
+# así que no llega a internet, y no depende de que Tailscale arranque antes que
+# Docker al encender la Pi. En la red de casa va sin cifrar (http): alguien en
+# tu misma WiFi podría capturar la contraseña; por Tailscale va cifrado.
+#
+# Quien tenga la contraseña controla Docker entero, que en la práctica es ser
+# root en la Pi: la contraseña no va en el repo, solo su hash en el Caddyfile.
+services:
+  docker-api:
+    image: caddy:2-alpine
+    container_name: ludok-docker-api
+    restart: unless-stopped
+    # Red del sistema, escuchando solo donde dice el Caddyfile: así
+    # un `netstat` dentro de este contenedor ve TODOS los puertos ocupados de
+    # la Pi, y la app puede decir de verdad si un puerto está libre.
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Base de fabricantes por MAC que trae nmap: la pantalla «Red de casa» la
+      # usa para decir de qué marca es cada dispositivo. Solo lectura. Hace falta
+      # `sudo apt install nmap` (solo por esta lista); si no lo quieres, quita esta
+      # línea: la red sigue funcionando, solo que sin fabricantes.
+      - /usr/share/nmap/nmap-mac-prefixes:/oui.txt:ro

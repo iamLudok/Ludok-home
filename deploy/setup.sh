@@ -50,12 +50,12 @@ fi
 
 # ── 5. Daily news cron job ───────────────────────
 echo ""
-echo "⏰ Setting up daily cron job (every day at 7:30)..."
+echo "⏰ Setting up daily cron job (every day at 5:45)..."
 
-CRON_LINE="30 7 * * * $HOME/ludok-home-env/bin/python3 $SCRIPT_DIR/noticias.py >> $HOME/ludok-home.log 2>&1"
+CRON_LINE="45 5 * * * $HOME/ludok-home-env/bin/python3 $SCRIPT_DIR/noticias.py >> $HOME/ludok-home.log 2>&1"
 (crontab -l 2>/dev/null | grep -v "noticias.py"; echo "$CRON_LINE") | crontab -
 
-echo "   ✅ Cron configured: every day at 7:30"
+echo "   ✅ Cron configured: every day at 5:45"
 echo "   📝 Logs at: ~/ludok-home.log"
 
 # ── Done ─────────────────────────────────────────
