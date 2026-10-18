@@ -48,7 +48,7 @@ Most assistants send your personal data to external servers. Ludok Home is built
 - 🖥️ **Your server, from your phone**: start, stop, update and inspect your Docker containers, see the Pi's temperature and who is on your home network. Nothing runs on the Pi for this until you open the screen.
 - 🌍 **Away from home over Tailscale**: the app talks to the same addresses; nothing is exposed to the internet.
 
-> **What does leave your network:** link previews. When you save a link, the phone fetches that page to get its picture and title, as any browser would. Everything else stays between your phone, your Pi and your Nextcloud.
+> **What does leave your network:** link previews (when you save a link, the phone fetches that page to get its picture and title, as any browser would), the weather (your approximate location, or the city you choose, goes to Open-Meteo) and the speed test (filler bytes to and from Cloudflare). None of them needs an account. Everything else stays between your phone, your Pi and your Nextcloud.
 
 ---
 
