@@ -5,7 +5,7 @@
 // un SQLite de escritorio para probarlo. Como recibe la base de datos por
 // parámetro, el test ejecuta EXACTAMENTE el mismo código que corre en el móvil,
 // que es lo único que hace que la prueba valga para algo.
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
 import {
   carExpenses as carTable,
@@ -14,6 +14,7 @@ import {
   listItems as listTable,
   quickNotes as notesTable,
   savedLinks as savedTable,
+  deviceNames as deviceNamesTable,
   settings as settingsTable,
 } from './schema'
 import {
@@ -81,13 +82,15 @@ export async function exportAll(database: LudokDb): Promise<BackupFile> {
   const items = await database.select().from(listTable)
   const notes = await database.select().from(notesTable)
   const saved = await database.select().from(savedTable)
+  const names = await database.select().from(deviceNamesTable)
   const appSettings = await readSettings(database)
 
   // La contraseña de Nextcloud NO se exporta. Una copia se comparte y se mueve
   // de sitio, y esa contraseña da permiso de ESCRITURA sobre tus ficheros; la
   // propia copia acaba subida ahí, así que además viajaría con su propia llave
   // dentro. Al restaurar en otro móvil hay que volver a escribirla, y punto.
-  const { nextcloudPassword: _omitted, ...safeSettings } = appSettings
+  // Por lo mismo, tampoco la de Docker: esa además da control total de la Pi.
+  const { nextcloudPassword: _omitted, dockerPassword: _omittedDocker, ...safeSettings } = appSettings
 
   return {
     app: 'ludok-home',
@@ -99,6 +102,7 @@ export async function exportAll(database: LudokDb): Promise<BackupFile> {
     listItems: items.map(rowToListItem),
     notes: notes.map(rowToQuickNote),
     saved: saved.map(rowToSavedLink),
+    deviceNames: names.map((n) => ({ mac: n.mac, name: n.name })),
     settings: safeSettings,
   }
 }
@@ -110,6 +114,7 @@ export interface ImportResult {
   listItems: number
   notes: number
   saved: number
+  deviceNames: number
   /** Tomas que apuntaban a una medicina que no viene en la copia. */
   discardedIntakes: number
   /** Las fotos que traía la copia, para que `backup.ts` las escriba a fichero. */
@@ -147,6 +152,7 @@ export async function importBackup(
   // Ausentes en las copias de la v1: se tratan como listas vacías.
   const incomingNotes = parsed.notes ?? []
   const incomingSaved = parsed.saved ?? []
+  const incomingNames = (parsed.deviceNames ?? []).filter((d) => d?.mac && d?.name)
 
   // Una toma sin su medicina no se puede enseñar en ningún sitio (el gráfico
   // va por medicina) y quedaría como fila fantasma para siempre. En 'merge' la
@@ -168,6 +174,7 @@ export async function importBackup(
       await tx.delete(listTable)
       await tx.delete(notesTable)
       await tx.delete(savedTable)
+      await tx.delete(deviceNamesTable)
     }
     for (const part of chunk(incomingCar)) {
       await tx
@@ -205,6 +212,12 @@ export async function importBackup(
         .values(part.map(savedLinkToRow))
         .onConflictDoUpdate({ target: savedTable.id, set: excludedSet(savedTable) })
     }
+    for (const part of chunk(incomingNames)) {
+      await tx
+        .insert(deviceNamesTable)
+        .values(part.map((d) => ({ mac: d.mac.toLowerCase(), name: d.name })))
+        .onConflictDoUpdate({ target: deviceNamesTable.mac, set: { name: sql`excluded.name` } })
+    }
   })
 
   // Las preferencias se restauran, pero se conserva la schemaVersion actual. La
@@ -220,6 +233,10 @@ export async function importBackup(
       nextcloudFolder: parsed.settings.nextcloudFolder || current.nextcloudFolder,
       autoBackup: parsed.settings.autoBackup ?? current.autoBackup,
       notesImportedAt: parsed.settings.notesImportedAt ?? current.notesImportedAt,
+      dockerUrl: parsed.settings.dockerUrl || current.dockerUrl,
+      dockerLanUrl: parsed.settings.dockerLanUrl || current.dockerLanUrl,
+      newsReminder: parsed.settings.newsReminder || current.newsReminder,
+      dockerUser: parsed.settings.dockerUser || current.dockerUser,
       id: 'app',
     })
   }
@@ -231,6 +248,7 @@ export async function importBackup(
     listItems: incomingItems.length,
     notes: incomingNotes.length,
     saved: incomingSaved.length,
+    deviceNames: incomingNames.length,
     discardedIntakes: allIntakes.length - incomingIntakes.length,
     photos: Array.isArray(parsed.photos) ? parsed.photos : [],
   }

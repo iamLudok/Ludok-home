@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import { useRouter } from 'expo-router'
 import { Screen } from '../src/ui/Screen'
@@ -7,8 +7,11 @@ import { Card, DataRow } from '../src/ui/Card'
 import { Txt } from '../src/ui/Text'
 import { Button } from '../src/ui/Button'
 import { Chips } from '../src/ui/Chips'
+import { TimePicker } from '../src/ui/Pickers'
+import { usePalette } from '../src/ui/ThemeProvider'
+import { newsReminderTime, DEFAULT_NEWS_REMINDER } from '../src/lib/newsReminder'
 import { useToast } from '../src/ui/Toast'
-import { space } from '../src/ui/theme'
+import { radius, space } from '../src/ui/theme'
 import { useSettings } from '../src/hooks/useSettings'
 import { useCarExpenses, useIntakes, useList, useMedicines, useNotes, useSaved } from '../src/hooks/useData'
 import { useSync } from '../src/hooks/useSync'
@@ -18,6 +21,7 @@ import { importFromBotNotes } from '../src/lib/notesImport'
 import { ensureNotifications, syncMedicineReminders } from '../src/lib/notifications'
 import { configFrom } from '../src/lib/nextcloud'
 import { NextcloudSettings } from '../src/components/NextcloudSettings'
+import { DockerSettings } from '../src/components/DockerSettings'
 
 const THEMES = [
   { key: 'system' as const, label: 'Sistema' },
@@ -38,7 +42,16 @@ export default function Ajustes() {
   const notes = useNotes()
   const saved = useSaved()
   const router = useRouter()
+  const palette = usePalette()
   const [busy, setBusy] = useState(false)
+  const newsAt = newsReminderTime(settings)
+
+  const setNews = async (value: string) => {
+    await updateSettings({ newsReminder: value })
+    await ensureNotifications()
+    await syncMedicineReminders()
+    toast(value === 'off' ? 'Aviso de noticias apagado' : `Aviso de noticias a las ${value}`)
+  }
 
   const days = daysSinceBackup(settings.lastBackup)
   const lastBackupText = !settings.lastBackup ? 'nunca' : days === 0 ? 'hoy' : `hace ${days} ${days === 1 ? 'día' : 'días'}`
@@ -63,7 +76,7 @@ export default function Ajustes() {
       const extra = res.discardedIntakes ? `\n\nSe descartaron ${res.discardedIntakes} tomas de medicinas que no venían en la copia.` : ''
       Alert.alert(
         'Copia restaurada',
-        `${res.carExpenses} gastos, ${res.medicines} medicinas, ${res.intakes} tomas, ${res.listItems} elementos de listas, ${res.notes} notas y ${res.saved} guardados.${extra}`,
+        `${res.carExpenses} gastos, ${res.medicines} medicinas, ${res.intakes} tomas, ${res.listItems} elementos de listas, ${res.notes} notas, ${res.saved} guardados y ${res.deviceNames} nombres de dispositivos.${extra}`,
       )
     } catch (e) {
       Alert.alert('Error al importar', e instanceof Error ? e.message : 'Error desconocido')
@@ -146,6 +159,8 @@ export default function Ajustes() {
 
         <NextcloudSettings />
 
+        <DockerSettings />
+
         {!settings.notesImportedAt ? (
           <Card>
             <Txt variant="title">Datos del bot de Telegram</Txt>
@@ -168,11 +183,28 @@ export default function Ajustes() {
         ) : null}
 
         <Card>
-          <Txt variant="title">Avisos de medicinas</Txt>
+          <Txt variant="title">Avisos</Txt>
           <Txt variant="small" tone="muted">
-            Se programan en el propio móvil para los próximos 14 días y se reprograman cada vez que abres la app. Llegan
-            aunque la app esté cerrada y sin conexión.
+            Se programan en el propio móvil y llegan aunque la app esté cerrada y sin conexión. Los de medicinas, para los
+            próximos 14 días, y se reprograman cada vez que abres la app.
           </Txt>
+          <Pressable
+            onPress={() => setNews(newsAt ? 'off' : DEFAULT_NEWS_REMINDER)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: !!newsAt }}
+            style={({ pressed }) => [styles.toggle, { borderColor: palette.line, opacity: pressed ? 0.6 : 1 }]}
+          >
+            <View style={[styles.dot, { borderColor: newsAt ? palette.fg : palette.line, backgroundColor: newsAt ? palette.fg : 'transparent' }]} />
+            <View style={styles.grow}>
+              <Txt variant="small" style={styles.bold}>
+                Avisarme de las noticias cada mañana
+              </Txt>
+              <Txt variant="data" tone="faint">
+                {newsAt ? `A las ${newsAt}. La Pi las prepara a las 5:45.` : 'Apagado'}
+              </Txt>
+            </View>
+          </Pressable>
+          {newsAt ? <TimePicker label="Hora del aviso" value={newsAt} onChange={setNews} /> : null}
           <Button title="Probar un aviso" onPress={testReminder} />
         </Card>
 
@@ -195,4 +227,8 @@ const styles = StyleSheet.create({
   content: { padding: space.lg, paddingBottom: space.xxl, gap: space.md },
   stats: { gap: space.xs },
   footer: { textAlign: 'center' },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderWidth: StyleSheet.hairlineWidth, borderRadius: radius.md, padding: space.md },
+  dot: { width: 18, height: 18, borderRadius: radius.pill, borderWidth: 2 },
+  grow: { flex: 1 },
+  bold: { fontWeight: '600' },
 })

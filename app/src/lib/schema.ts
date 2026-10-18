@@ -73,6 +73,11 @@ export const savedLinks = sqliteTable('saved_links', {
   createdAt: integer('createdAt').notNull(),
 })
 
+export const deviceNames = sqliteTable('device_names', {
+  mac: text('mac').primaryKey(),
+  name: text('name').notNull(),
+})
+
 export const settings = sqliteTable('settings', {
   id: text('id').primaryKey(),
   theme: text('theme').$type<'dark' | 'light' | 'system'>().notNull().default('system'),
@@ -85,6 +90,11 @@ export const settings = sqliteTable('settings', {
   autoBackup: integer('autoBackup', { mode: 'boolean' }),
   lastAutoBackupAt: integer('lastAutoBackupAt'),
   notesImportedAt: integer('notesImportedAt'),
+  dockerUrl: text('dockerUrl'),
+  dockerLanUrl: text('dockerLanUrl'),
+  newsReminder: text('newsReminder'),
+  dockerUser: text('dockerUser'),
+  dockerPassword: text('dockerPassword'),
   schemaVersion: integer('schemaVersion').notNull(),
 })
 

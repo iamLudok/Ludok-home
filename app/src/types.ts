@@ -157,7 +157,32 @@ export interface Settings {
    * para no ofrecer la importación otra vez y no duplicar todo.
    */
   notesImportedAt?: number
+
+  /** API de Docker de la Pi, por Tailscale: http://100.x.x.x:2375 */
+  dockerUrl?: string
+  /** La misma API por la WiFi de casa (http://192.168.1.x:2375), para cuando no hay Tailscale. */
+  dockerLanUrl?: string
+  /**
+   * Aviso diario de que las noticias están listas: 'HH:MM', o 'off' si está
+   * apagado. Ausente = a la hora por defecto (`DEFAULT_NEWS_REMINDER`), para que las instalaciones que ya existían
+   * lo tengan sin tener que ir a Ajustes.
+   */
+  newsReminder?: string
+  dockerUser?: string
+  /**
+   * Contraseña de la API de Docker. Igual que la de Nextcloud, NO va en las
+   * copias: quien la tiene controla Docker entero, que es casi ser root en la Pi.
+   */
+  dockerPassword?: string
   schemaVersion: number
+}
+
+/* --- Red de casa ---------------------------------------------------------- */
+
+/** El nombre que le pones a un dispositivo de la red, por su MAC. */
+export interface DeviceName {
+  mac: string
+  name: string
 }
 
 /** Estructura del fichero de copia de seguridad (export/import). */
@@ -172,6 +197,8 @@ export interface BackupFile {
   /** Opcionales: las copias de la v1 no los traen, y el formato solo crece. */
   notes?: QuickNote[]
   saved?: SavedLink[]
+  /** Nombres de los dispositivos de la red. Desde la v3 del formato. */
+  deviceNames?: DeviceName[]
   /** Fotos propias de las listas, para que la copia sea un solo fichero. */
   photos?: BackupPhoto[]
   settings: Settings | null

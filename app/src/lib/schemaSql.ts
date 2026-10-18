@@ -70,6 +70,11 @@ CREATE TABLE IF NOT EXISTS saved_links (
   createdAt INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS device_names (
+  mac TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   id TEXT PRIMARY KEY NOT NULL,
   theme TEXT NOT NULL DEFAULT 'system',
@@ -82,6 +87,11 @@ CREATE TABLE IF NOT EXISTS settings (
   autoBackup INTEGER,
   lastAutoBackupAt INTEGER,
   notesImportedAt INTEGER,
+  dockerUrl TEXT,
+  dockerLanUrl TEXT,
+  newsReminder TEXT,
+  dockerUser TEXT,
+  dockerPassword TEXT,
   schemaVersion INTEGER NOT NULL
 );
 
@@ -136,6 +146,19 @@ export const MIGRATIONS: string[] = [
      createdAt INTEGER NOT NULL
    );
    CREATE INDEX IF NOT EXISTS quick_notes_done_idx ON quick_notes (done);`,
+  // v2 → v3: conexión con la API de Docker de la Pi (pantalla Servidor).
+  `ALTER TABLE settings ADD COLUMN dockerUrl TEXT;
+   ALTER TABLE settings ADD COLUMN dockerUser TEXT;
+   ALTER TABLE settings ADD COLUMN dockerPassword TEXT;`,
+  // v3 → v4: dirección de Docker por la WiFi de casa, para cuando no hay Tailscale.
+  `ALTER TABLE settings ADD COLUMN dockerLanUrl TEXT;`,
+  // v4 → v5: hora del aviso diario de las noticias.
+  `ALTER TABLE settings ADD COLUMN newsReminder TEXT;`,
+  // v5 → v6: nombres de los dispositivos de la red de casa.
+  `CREATE TABLE IF NOT EXISTS device_names (
+     mac TEXT PRIMARY KEY NOT NULL,
+     name TEXT NOT NULL
+   );`,
 ]
 
 /** Versión actual del esquema local. */

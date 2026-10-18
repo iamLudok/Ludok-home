@@ -1,4 +1,5 @@
-// Avisos de medicinas: notificaciones LOCALES programadas en el propio móvil.
+// Avisos de medicinas (y el de las noticias de la mañana): notificaciones
+// LOCALES programadas en el propio móvil.
 //
 // No hay servidor ni tarea en segundo plano: Android guarda las alarmas y las
 // lanza aunque la app esté cerrada (y las restaura al reiniciar el móvil). Lo
@@ -11,14 +12,22 @@
 import { Platform } from 'react-native'
 import * as Notifications from 'expo-notifications'
 import { listIntakes, listMedicines, reminderPlan } from './medicines'
+import { getSettings } from './settings'
+import { newsReminderTime } from './newsReminder'
 
 const CHANNEL = 'medicinas'
+/** Canal aparte: así se puede silenciar en Android sin tocar el de medicinas. */
+const NEWS_CHANNEL = 'noticias'
 
 /** Lo que va en `data` de cada aviso, para saber a qué medicina se refiere al tocarlo. */
 export interface ReminderData {
   kind: 'medicina'
   medicineId: string
   day: string
+}
+
+export interface NewsReminderData {
+  kind: 'noticias'
 }
 
 Notifications.setNotificationHandler({
@@ -44,6 +53,11 @@ export async function ensureNotifications(): Promise<boolean> {
       description: 'Avisos para tomar las medicinas',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 150, 250],
+    })
+    await Notifications.setNotificationChannelAsync(NEWS_CHANNEL, {
+      name: 'Noticias de la mañana',
+      description: 'Aviso diario de que el audio de noticias está listo',
+      importance: Notifications.AndroidImportance.DEFAULT,
     })
   }
   const current = await Notifications.getPermissionsAsync()
@@ -73,9 +87,22 @@ export function syncMedicineReminders(): Promise<number> {
 
 async function doSync(): Promise<number> {
   const granted = (await Notifications.getPermissionsAsync()).granted
-  // La app solo programa avisos de medicinas, así que se puede borrar todo.
+  // La app solo programa sus propios avisos (medicinas y noticias), así que se
+  // puede borrar todo y volver a programarlo entero: es lo que evita duplicados.
   await Notifications.cancelAllScheduledNotificationsAsync()
   if (!granted) return 0
+
+  const newsAt = newsReminderTime(await getSettings())
+  if (newsAt) {
+    const [hour, minute] = newsAt.split(':').map(Number)
+    const data: NewsReminderData = { kind: 'noticias' }
+    await Notifications.scheduleNotificationAsync({
+      content: { title: 'Noticias de hoy', body: 'El audio ya está listo. Toca para escucharlas.', data: { ...data } },
+      // Diario y repetido: la Pi las genera a las 5:45, así que a esta hora ya
+      // están (si un día falla, se escuchan las de ayer y Hoy lo dice).
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: NEWS_CHANNEL },
+    })
+  }
 
   const meds = (await listMedicines()).filter((m) => m.active)
   const plan = reminderPlan(meds, await listIntakes())
@@ -95,4 +122,8 @@ async function doSync(): Promise<number> {
 
 export function isReminderData(data: unknown): data is ReminderData {
   return typeof data === 'object' && data !== null && (data as ReminderData).kind === 'medicina'
+}
+
+export function isNewsReminderData(data: unknown): data is NewsReminderData {
+  return typeof data === 'object' && data !== null && (data as NewsReminderData).kind === 'noticias'
 }

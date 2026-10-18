@@ -8,4 +8,5 @@
  */
 // v2: notas rápidas, guardados, y para quién / vista previa / foto en las
 // listas. Una copia de la v1 sigue entrando: todo lo nuevo es opcional.
-export const SCHEMA_VERSION = 2
+// v3: nombres de los dispositivos de la red (`deviceNames`), también opcional.
+export const SCHEMA_VERSION = 3

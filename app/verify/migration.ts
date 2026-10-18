@@ -137,6 +137,13 @@ async function main() {
   check('y las columnas nuevas quedan vacías', leche.rows[0][1] === null && leche.rows[0][2] === null)
   eq('existe la tabla de notas', await count('quick_notes'), 0)
   eq('existe la tabla de guardados', await count('saved_links'), 0)
+  const dockerCol = await old.execute("SELECT dockerUrl FROM settings WHERE id = 'app'")
+  check('los ajustes ganan la conexión con Docker, vacía', dockerCol.rows[0][0] === null)
+  const lanCol = await old.execute("SELECT dockerLanUrl FROM settings WHERE id = 'app'")
+  check('y la dirección de casa, vacía', lanCol.rows[0][0] === null)
+  const newsCol = await old.execute("SELECT newsReminder FROM settings WHERE id = 'app'")
+  check('y el aviso de noticias, vacío (que significa «a la hora por defecto»)', newsCol.rows[0][0] === null)
+  eq('existe la tabla de nombres de dispositivos', await count('device_names'), 0)
   const pwd = await old.execute("SELECT nextcloudPassword FROM settings WHERE id = 'app'")
   eq('se conserva la contraseña de Nextcloud', String(pwd.rows[0][0]), 'secreta')
 

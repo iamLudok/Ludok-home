@@ -47,10 +47,12 @@
     "verify:library": "tsx verify/library.ts",
     "verify:migration": "tsx verify/migration.ts",
     "verify:import": "tsx verify/import.ts",
-    "verify": "npm run verify:data && npm run verify:library && npm run verify:migration && npm run verify:import && npm run verify:caldav && npm run verify:links",
+    "verify": "npm run verify:data && npm run verify:library && npm run verify:migration && npm run verify:import && npm run verify:caldav && npm run verify:links && npm run verify:docker",
     "build:apk": "bash scripts/build-apk.sh",
     "verify:caldav": "tsx verify/caldav.ts",
-    "verify:links": "tsx verify/links.ts"
+    "verify:links": "tsx verify/links.ts",
+    "verify:docker": "tsx verify/docker.ts",
+    "verify:docker-real": "tsx verify/docker-real.ts"
   },
   "private": true
 }

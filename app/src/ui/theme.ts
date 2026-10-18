@@ -11,7 +11,8 @@
  * - `series*`: qué es cada barra del gráfico del coche (gasolina, taller,
  *   recambios), siempre en ese orden fijo y con leyenda.
  * - `taken` / `missed` / `pending`: el estado de una medicina, siempre con su
- *   símbolo al lado (el color nunca va solo).
+ *   símbolo al lado (el color nunca va solo). Los mismos tres sirven para el
+ *   estado de un contenedor (bien / mal / a medias), siempre con su texto.
  * - `danger` solo para borrar y `warn` solo para avisos.
  *
  * Los colores de gráficos están validados (separación para daltonismo y
@@ -133,4 +134,6 @@ export const type = {
   small: { fontSize: 12.5, fontWeight: '500' },
   label: { fontSize: 10.5, fontWeight: '600', letterSpacing: 1.1, textTransform: 'uppercase' },
   data: { fontSize: 12, fontWeight: '500', fontVariant: ['tabular-nums'] },
+  /** Logs, comandos y docker-compose: columnas que cuadran. */
+  mono: { fontSize: 11.5, fontFamily: 'monospace', lineHeight: 16 },
 } as const

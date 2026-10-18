@@ -193,6 +193,11 @@ export function rowToSettings(r: SettingsRow): Settings {
     autoBackup: u(r.autoBackup),
     lastAutoBackupAt: u(r.lastAutoBackupAt),
     notesImportedAt: u(r.notesImportedAt),
+    dockerUrl: u(r.dockerUrl),
+    dockerLanUrl: u(r.dockerLanUrl),
+    newsReminder: u(r.newsReminder),
+    dockerUser: u(r.dockerUser),
+    dockerPassword: u(r.dockerPassword),
     schemaVersion: r.schemaVersion,
   }
 }
@@ -210,6 +215,11 @@ export function settingsToRow(s: Settings): SettingsInsert {
     autoBackup: n(s.autoBackup),
     lastAutoBackupAt: n(s.lastAutoBackupAt),
     notesImportedAt: n(s.notesImportedAt),
+    dockerUrl: n(s.dockerUrl),
+    dockerLanUrl: n(s.dockerLanUrl),
+    newsReminder: n(s.newsReminder),
+    dockerUser: n(s.dockerUser),
+    dockerPassword: n(s.dockerPassword),
     schemaVersion: s.schemaVersion ?? SCHEMA_VERSION,
   }
 }

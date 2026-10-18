@@ -33,6 +33,7 @@ import {
   unmarkTaken,
   updateMedicine,
 } from '../src/lib/medicines'
+import { newsReminderTime } from '../src/lib/newsReminder'
 import { addItem, clearAll, cleanUrl, clearDone, giftsByPerson, listItems, NO_ONE, removeItem, setDone, shareText, updateItem } from '../src/lib/lists'
 import { addNote, listNotes, notesForToday, notesInMind, setNoteDone } from '../src/lib/notes'
 import { addSaved, filterSaved, listSaved, normalizeTags, setSavedDone, tagCounts, updateSaved } from '../src/lib/saved'
@@ -227,14 +228,14 @@ async function listRules() {
 
   console.log('\nListas: regalos, fotos, compartir y vaciar')
   await freshDbAsCurrent()
-  await addItem('regalos', 'Libro', { forWhom: ' Ama ' })
-  check('el mismo regalo para otra persona sí entra', (await addItem('regalos', 'libro', { forWhom: 'Aita' })) !== null)
-  eq('para la misma persona no se duplica', await addItem('regalos', 'Libro', { forWhom: 'ama' }), null)
+  await addItem('regalos', 'Libro', { forWhom: ' Laura ' })
+  check('el mismo regalo para otra persona sí entra', (await addItem('regalos', 'libro', { forWhom: 'Pablo' })) !== null)
+  eq('para la misma persona no se duplica', await addItem('regalos', 'Libro', { forWhom: 'laura' }), null)
   await addItem('regalos', 'Bufanda')
   const groups = giftsByPerson(await listItems('regalos'))
-  eq('agrupados por persona, sin decidir al final', groups.map((g) => g.person).join(), `Aita,Ama,${NO_ONE}`)
-  eq('para quién se guarda sin espacios', (await listItems('regalos')).find((i) => i.forWhom === 'Ama')?.name, 'Libro')
-  check('en la compra no se guarda para quién', (await addItem('compra', 'Pan', { forWhom: 'Ama' }))?.forWhom === undefined)
+  eq('agrupados por persona, sin decidir al final', groups.map((g) => g.person).join(), `Laura,Pablo,${NO_ONE}`)
+  eq('para quién se guarda sin espacios', (await listItems('regalos')).find((i) => i.forWhom === 'Laura')?.name, 'Libro')
+  check('en la compra no se guarda para quién', (await addItem('compra', 'Pan', { forWhom: 'Laura' }))?.forWhom === undefined)
   const conFoto = await addItem('wishlist', 'Auriculares', { url: 'amazon.es/dp/B0CFPJYX7P', photo: 'a.jpg', imageUrl: 'https://img/x.jpg' })
   await updateItem(conFoto!.id, { photo: undefined })
   eq('quitar la foto con undefined', (await listItems('wishlist'))[0].photo, undefined)
@@ -256,12 +257,12 @@ async function noteRules() {
   console.log('\nNotas rápidas')
   await freshDbAsCurrent()
   const hoy = await addNote(' Llamar al taller ', '2026-10-18')
-  await addNote('Comprar regalo de Ama', '2026-10-17')
+  await addNote('Comprar regalo de Laura', '2026-10-17')
   await addNote('Idea: app de recetas')
   await addNote('Para mañana', '2026-10-19')
   await throws('una nota vacía no vale', () => addNote('   '), /vacía/)
   const notes = await listNotes()
-  eq('la de ayer sin hacer sigue saliendo hoy, y primero', notesForToday(notes, '2026-10-18').map((n) => n.text).join('|'), 'Comprar regalo de Ama|Llamar al taller')
+  eq('la de ayer sin hacer sigue saliendo hoy, y primero', notesForToday(notes, '2026-10-18').map((n) => n.text).join('|'), 'Comprar regalo de Laura|Llamar al taller')
   check('la de mañana no sale hoy', !notesForToday(notes, '2026-10-18').some((n) => n.text === 'Para mañana'))
   eq('las de tener en mente van aparte', notesInMind(notes).map((n) => n.text).join(), 'Idea: app de recetas')
   await setNoteDone(hoy.id, true)
@@ -308,8 +309,17 @@ async function resetRules() {
   check('ayer no cuenta como olvidada', adherence([reset], [], '2026-10-17', '2026-10-18', '2026-10-18')[0].days[0].state === 'nada')
 }
 
+function newsReminderRules() {
+  console.log('\nAviso de las noticias')
+  eq('sin ajuste, antes de salir de casa', newsReminderTime({}), '06:15')
+  eq('a la hora elegida', newsReminderTime({ newsReminder: '07:45' }), '07:45')
+  eq('apagado', newsReminderTime({ newsReminder: 'off' }), null)
+  eq('un valor raro cuenta como la hora por defecto, no como apagado', newsReminderTime({ newsReminder: 'mañana' }), '06:15')
+}
+
 async function main() {
   datesRules()
+  newsReminderRules()
   moneyRules()
   await carRules()
   await medicineRules()

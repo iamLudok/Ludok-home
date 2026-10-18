@@ -49,6 +49,20 @@ export default function Hoy() {
     <Screen
       title={capitalize(longDate(day))}
       right={
+        <View style={styles.headerIcons}>
+        <Pressable
+          onPress={() => router.navigate('/servidor')}
+          accessibilityRole="button"
+          accessibilityLabel="Servidor"
+          hitSlop={10}
+          style={({ pressed }) => [styles.server, { opacity: pressed ? 0.5 : 1 }]}
+        >
+          {[0, 1].map((i) => (
+            <View key={i} style={[styles.serverUnit, { borderColor: palette.muted }]}>
+              <View style={[styles.serverLed, { backgroundColor: palette.muted }]} />
+            </View>
+          ))}
+        </Pressable>
         <Pressable
           onPress={() => router.navigate('/ajustes')}
           accessibilityRole="button"
@@ -58,6 +72,7 @@ export default function Hoy() {
         >
           <View style={[styles.gearDot, { backgroundColor: palette.muted }]} />
         </Pressable>
+        </View>
       }
     >
       <ScrollView
@@ -169,7 +184,7 @@ export default function Hoy() {
               <NewsPlayer news={sync.news} />
             ) : (
               <Txt variant="small" tone="muted">
-                {sync.refreshing ? 'Descargando…' : 'La Pi aún no ha dejado noticias. Se generan cada mañana a las 7:30.'}
+                {sync.refreshing ? 'Descargando…' : 'La Pi aún no ha dejado noticias. Se generan cada mañana a las 5:45.'}
               </Txt>
             )}
           </Card>
@@ -194,4 +209,9 @@ const styles = StyleSheet.create({
   // Engranaje geométrico: anillo con punto, sin librería de iconos.
   gear: { width: 22, height: 22, borderRadius: radius.pill, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   gearDot: { width: 6, height: 6, borderRadius: radius.pill },
+  headerIcons: { flexDirection: 'row', alignItems: 'flex-end', gap: space.lg },
+  // Servidor geométrico: dos unidades de rack con su luz, sin librería de iconos.
+  server: { gap: 3, marginBottom: 4 },
+  serverUnit: { width: 22, height: 9, borderWidth: 2, borderRadius: 2, justifyContent: 'center', paddingLeft: 3 },
+  serverLed: { width: 3, height: 3, borderRadius: radius.pill },
 })

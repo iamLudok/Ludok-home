@@ -7,7 +7,7 @@
  */
 import { check, eq, finish, freshDb } from './harness'
 import { exportAll, importBackup, readSettings, writeSettings } from '../src/lib/backupCore'
-import { carExpenses, intakes, listItems, medicines, quickNotes, savedLinks } from '../src/lib/schema'
+import { carExpenses, deviceNames, intakes, listItems, medicines, quickNotes, savedLinks } from '../src/lib/schema'
 import { carExpenseToRow, intakeToRow, listItemToRow, medicineToRow, quickNoteToRow, savedLinkToRow } from '../src/lib/rows'
 import { addDays } from '../src/lib/dates'
 import type { BackupFile, CarExpense, ListItem, Medicine, MedicineIntake, QuickNote, SavedLink } from '../src/types'
@@ -43,7 +43,7 @@ const taken: MedicineIntake[] = [
 const items: ListItem[] = [
   { id: 'l1', list: 'compra', name: 'Leche', done: false, createdAt: 20 },
   { id: 'l2', list: 'wishlist', name: 'Auriculares', url: 'https://example.com/a', done: false, createdAt: 21 },
-  { id: 'l3', list: 'regalos', name: 'Libro', done: true, doneAt: 99, createdAt: 22, forWhom: 'Ama' },
+  { id: 'l3', list: 'regalos', name: 'Libro', done: true, doneAt: 99, createdAt: 22, forWhom: 'Laura' },
   { id: 'l4', list: 'wishlist', name: 'Zapatillas', done: false, createdAt: 23, imageUrl: 'https://img/z.jpg', photo: 'l4.jpg' },
 ]
 const notes: QuickNote[] = [
@@ -63,12 +63,17 @@ async function seed() {
   await db.insert(listItems).values(items.map(listItemToRow))
   await db.insert(quickNotes).values(notes.map(quickNoteToRow))
   await db.insert(savedLinks).values(saved.map(savedLinkToRow))
+  await db.insert(deviceNames).values([{ mac: '00:1a:2b:3c:4d:5e', name: 'Router' }])
   await writeSettings(db, {
     ...(await readSettings(db)),
     theme: 'dark',
     nextcloudUrl: 'http://100.64.0.1:8080',
     nextcloudUser: 'luken',
     nextcloudPassword: 'secreta',
+    dockerUrl: 'http://100.64.0.1:2375',
+    dockerLanUrl: 'http://192.168.1.50:2375',
+    dockerUser: 'ludok',
+    dockerPassword: 'docker-secreta',
     nextcloudFolder: 'Ludok Home',
     autoBackup: true,
     notesImportedAt: 1234,
@@ -88,6 +93,7 @@ function stable(b: BackupFile): string {
     listItems: sortById(rest.listItems),
     notes: sortById(rest.notes ?? []),
     saved: sortById(rest.saved ?? []),
+    deviceNames: [...(rest.deviceNames ?? [])].sort((a, b) => a.mac.localeCompare(b.mac)),
   })
 }
 
@@ -101,12 +107,14 @@ async function main() {
   eq('elementos de lista exportados', exported.listItems.length, 4)
   eq('notas exportadas', exported.notes?.length, 2)
   eq('guardados exportados', exported.saved?.length, 2)
+  eq('nombres de dispositivos exportados', exported.deviceNames?.[0]?.name, 'Router')
   eq('las etiquetas salen como lista', JSON.stringify(exported.saved?.find((l) => l.id === 's1')?.tags), '["receta","cena"]')
-  eq('para quién del regalo', exported.listItems.find((i) => i.id === 'l3')?.forWhom, 'Ama')
+  eq('para quién del regalo', exported.listItems.find((i) => i.id === 'l3')?.forWhom, 'Laura')
   check('las fotos no las mete el núcleo (las añade la parte nativa)', exported.photos === undefined)
   const json = JSON.stringify(exported)
   check('la copia no lleva ningún null', !json.includes('null'))
-  check('la contraseña de Nextcloud NO va en la copia', !json.includes('secreta'))
+  check('la contraseña de Nextcloud NO va en la copia', !json.includes('"secreta"'))
+  check('la contraseña de Docker NO va en la copia', !json.includes('docker-secreta'))
   eq('los avisos salen como lista', JSON.stringify(exported.medicines.find((m) => m.id === 'm1')?.reminders), '["09:30","13:00"]')
   eq('el booleano activo sale como booleano', exported.medicines.find((m) => m.id === 'm3')?.active, false)
   eq('el precio con tres decimales no se redondea', exported.carExpenses.find((e) => e.id === 'c1')?.pricePerLiter, 1.659)
@@ -122,6 +130,9 @@ async function main() {
   eq('exportar → importar → exportar da lo mismo', stable(again), stable({ ...exported, settings: again.settings }))
   const restored = await readSettings(b)
   eq('restaura la carpeta de Nextcloud', restored.nextcloudFolder, 'Ludok Home')
+  eq('restaura la dirección de Docker', restored.dockerUrl, 'http://100.64.0.1:2375')
+  eq('pero no la contraseña de Docker', restored.dockerPassword, undefined)
+  eq('restaura la dirección de casa de Docker', restored.dockerLanUrl, 'http://192.168.1.50:2375')
   eq('restaura el tema', restored.theme, 'dark')
   eq('restaura la marca de importación del bot', restored.notesImportedAt, 1234)
   eq('la contraseña no aparece de la nada al restaurar', restored.nextcloudPassword, undefined)
@@ -135,12 +146,13 @@ async function main() {
   console.log('\nReemplazar y combinar')
   const d = await seed()
   // Sin `notes` ni `saved`: así se prueba que replace vacía también lo que la copia no trae.
-  const { notes: _notes, saved: _saved, ...exportedCore } = exported
+  const { notes: _notes, saved: _saved, deviceNames: _dn, ...exportedCore } = exported
   const onlyOne: BackupFile = { ...exportedCore, carExpenses: [fuel], medicines: [daily], intakes: [taken[0]], listItems: [] }
   await importBackup(d, JSON.stringify(onlyOne), 'replace')
   eq('replace deja solo lo de la copia', (await exportAll(d)).carExpenses.length, 1)
   eq('replace vacía las listas', (await exportAll(d)).listItems.length, 0)
   eq('replace vacía las notas si la copia no trae', (await exportAll(d)).notes?.length, 0)
+  eq('y los nombres de dispositivos', (await exportAll(d)).deviceNames?.length, 0)
 
   const e = await seed()
   const extra: CarExpense = { ...workshop, id: 'c9', description: 'ITV' }
@@ -161,7 +173,7 @@ async function main() {
 
   console.log('\nUna copia de la v1 sigue entrando')
   const v1 = await freshDb()
-  const { notes: _n, saved: _s, ...v1Shape } = exported
+  const { notes: _n, saved: _s, deviceNames: _d, ...v1Shape } = exported
   const v1Items = exported.listItems.map(({ forWhom: _f, imageUrl: _i, photo: _p, ...rest }) => rest)
   const r1 = await importBackup(v1, JSON.stringify({ ...v1Shape, schemaVersion: 1, listItems: v1Items }))
   eq('entran los elementos de la v1', r1.listItems, 4)

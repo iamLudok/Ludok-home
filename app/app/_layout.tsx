@@ -13,7 +13,7 @@ import { ShareIntentProvider } from 'expo-share-intent'
 // evalúa, las tablas ya existen y cualquier pantalla puede consultar.
 import '../src/lib/db'
 import { ensureSettings } from '../src/lib/settings'
-import { ensureNotifications, isReminderData, syncMedicineReminders } from '../src/lib/notifications'
+import { ensureNotifications, isNewsReminderData, isReminderData, syncMedicineReminders } from '../src/lib/notifications'
 import { SyncProvider } from '../src/hooks/useSync'
 import { ShareReceiver } from '../src/components/ShareReceiver'
 import { ThemeProvider, usePalette, useIsDark } from '../src/ui/ThemeProvider'
@@ -65,15 +65,17 @@ export default function RootLayout() {
   )
 }
 
-/** Tocar un aviso de medicina abre la pestaña de medicinas, que es donde se marca. */
+/** Tocar un aviso de medicina abre medicinas (donde se marca); el de noticias, Hoy (donde está el reproductor). */
 function useOpenRemindersOnTap(enabled: boolean) {
   const router = useRouter()
   const response = Notifications.useLastNotificationResponse()
   useEffect(() => {
     if (!enabled || !response) return
     if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return
-    if (!isReminderData(response.notification.request.content.data)) return
-    router.navigate('/medicinas')
+    const data = response.notification.request.content.data
+    if (isReminderData(data)) router.navigate('/medicinas')
+    else if (isNewsReminderData(data)) router.navigate('/')
+    else return
     // Se limpia para que volver a abrir la app no vuelva a saltar a medicinas.
     Notifications.clearLastNotificationResponseAsync().catch(() => {})
   }, [enabled, response, router])

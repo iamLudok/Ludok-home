@@ -63,3 +63,16 @@ export function duration(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds))
   return `${Math.floor(s / 60)}:${pad(s % 60)}`
 }
+
+/** Bytes → «1,2 GB», «340 MB», «12 KB». */
+export function bytes(n: number): string {
+  if (!n || n < 1024) return `${n || 0} B`
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let v = n / 1024
+  let i = 0
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return `${v >= 10 ? Math.round(v) : v.toFixed(1).replace('.', ',')} ${units[i]}`
+}

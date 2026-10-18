@@ -187,7 +187,7 @@ export function ItemForm({
 
       {list === 'regalos' ? (
         <>
-          <Field label="Para quién" value={forWhom} onChangeText={setForWhom} placeholder="Ama, Nagore…" autoCapitalize="words" />
+          <Field label="Para quién" value={forWhom} onChangeText={setForWhom} placeholder="Laura, Pablo…" autoCapitalize="words" />
           {suggestions.length > 0 ? (
             <View style={styles.people}>
               {suggestions.map((p) => (

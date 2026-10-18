@@ -9,7 +9,7 @@ import { useMemo } from 'react'
 import { asc, desc, eq } from 'drizzle-orm'
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { db } from '../lib/db'
-import { cache, carExpenses, intakes, listItems, medicines, quickNotes, savedLinks } from '../lib/schema'
+import { cache, carExpenses, deviceNames, intakes, listItems, medicines, quickNotes, savedLinks } from '../lib/schema'
 import { rowToCarExpense, rowToIntake, rowToListItem, rowToMedicine, rowToQuickNote, rowToSavedLink } from '../lib/rows'
 import { TODAY_CACHE_KEY } from '../lib/today'
 import type { TodayData } from '../lib/nextcloud'
@@ -59,6 +59,12 @@ export function useNotes(): Query<QuickNote[]> {
 export function useSaved(): Query<SavedLink[]> {
   const { data, updatedAt } = useLiveQuery(db.select().from(savedLinks).orderBy(desc(savedLinks.createdAt)))
   return { data: useMemo(() => data.map(rowToSavedLink), [data]), ready: updatedAt !== undefined }
+}
+
+/** Nombres de los dispositivos de la red, por MAC. */
+export function useDeviceNames(): Query<Record<string, string>> {
+  const { data, updatedAt } = useLiveQuery(db.select().from(deviceNames))
+  return { data: useMemo(() => Object.fromEntries(data.map((d) => [d.mac, d.name])), [data]), ready: updatedAt !== undefined }
 }
 
 /** Lo último que se trajo de Nextcloud para la pestaña Hoy, o null si nunca. */
