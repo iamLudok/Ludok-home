@@ -28,6 +28,48 @@ Todo lo demás va después.
 | Medicinas | Pauta, avisos y registro de adherencia en dos semanas o en mes | El móvil |
 | Listas | Compra (compartir por WhatsApp, vaciar), wishlist y regalos con imagen, y regalos agrupados por persona | El móvil |
 | Guardados | Reels, apps, portfolios y webs para luego, con etiquetas | El móvil |
+| Servidor (icono en Hoy) | Los Docker de la Pi: estado, arrancar/parar/reiniciar/eliminar, logs, comandos, compose, actualizar y cambiar de versión, puertos y limpieza. Arriba, cómo está la Pi y quién hay en la red de casa | La API de Docker de la Pi, por Tailscale o por la WiFi de casa |
+
+### Servidor: los Docker de la Pi
+
+Sustituye al bot `docker-controller-bot` de Telegram, todo **bajo demanda**: lo que el bot avisaba
+solo (caídas, actualizaciones) aquí se ve al abrir la pantalla, en «Desde la última vez». No hay
+avisos push, ni auto-actualizaciones, ni tareas programadas.
+
+- La app habla con la API de Docker a través de un Caddy con usuario y contraseña
+  (`deploy/docker-api` en la raíz del repo), publicado en Tailscale con `tailscale serve` y también
+  en la IP fija de casa de la Pi. La app prueba primero Tailscale y, si no responde en 2,5 s, la WiFi
+  de casa. **Fuera de casa hace falta Tailscale**: no se abre a internet a propósito.
+- Por la WiFi de casa va sin cifrar (`http://`): alguien en tu misma red podría ver la contraseña.
+  Por Tailscale va cifrado.
+- Esa contraseña da control total de Docker, que es casi ser root en la Pi: no viaja en las copias.
+- **Actualizar** hace lo mismo que el bot: descarga, para y renombra el viejo a `…_old`, crea el
+  nuevo con la misma configuración (quitando lo heredado de la imagen vieja y volviendo a montar los
+  volúmenes anónimos), comprueba que aguanta en pie y solo entonces borra el viejo. Si algo falla, el
+  viejo vuelve tal cual.
+- «¿Hay versión nueva?» se lo pregunta el propio Docker al registro, y distingue entre «hay una
+  nueva publicada» y «ya está descargada pero sin aplicar».
+- Los puertos que se ven son **todos** los de la Pi, no solo los de los contenedores: el Caddy va con
+  la red del sistema y la app ejecuta `netstat` dentro de él.
+- No se deja parar, eliminar ni actualizar `ludok-docker-api` desde la app: es la propia puerta.
+- **La Pi y la red de casa** (lo que eran `/pi` y `/red` del bot): arriba en Servidor salen la
+  temperatura, la RAM, el disco, la carga y cuánto lleva encendida, y «Red de casa» lista quién está
+  conectado (un ping a cada IP del /24 y la tabla de vecinos; tarda un segundo). Nada se queda
+  ejecutándose en la Pi: se lee solo al abrir la pantalla, dentro del mismo contenedor de la API, que
+  ve /proc y /sys de la Pi. A cada dispositivo se le puede poner nombre, y los nombres van en la copia. Sale el fabricante (base de `nmap`), el móvil desde el que miras se marca solo, y un aparato que se ve por el router y por el amplificador (que reescribe la primera mitad de la MAC y conserva la segunda) se junta en una sola fila.
+- **Limpieza de imágenes** no usa `docker image prune -a`, que se llevaría también las
+  actualizaciones descargadas sin aplicar. Las reparte en tres grupos y enseña cuáles hay en cada uno:
+  versiones viejas de lo que usas (se borran), de apps que ya no tienes en marcha (se borran, sus
+  datos se quedan en sus carpetas) y actualizaciones pendientes (no se tocan).
+
+`verify/docker-real.ts` prueba todo esto contra un Docker de verdad con un contenedor de usar y
+tirar (incluido que los datos sobreviven a una actualización y que un fallo deja el viejo como
+estaba). No va en `npm run verify` porque necesita la Pi:
+
+```bash
+LUDOK_DOCKER_URL=http://100.x.x.x:2375 LUDOK_DOCKER_PASSWORD=… npm run verify:docker-real
+# con LUDOK_DOCKER_LAN_URL=http://192.168.1.x:2375 prueba también la entrada por casa
+```
 
 ### Compartir a la app
 
@@ -63,10 +105,14 @@ borra: su historial se queda en el gráfico.
 
 ### Noticias
 
-La Pi las genera a las 7:30 con Piper (voz local) y deja `noticias.ogg` y `noticias.json` (el
+La Pi las genera a las 5:45 con Piper (voz local) y deja `noticias.ogg` y `noticias.json` (el
 segundo en que empieza cada noticia) en la carpeta «Ludok Home» de Nextcloud. La app las descarga
 al móvil en cuanto puede, para escucharlas en el coche sin cobertura, y deja saltar de una noticia
 a otra.
+
+Cada mañana a las 6:15, antes de salir de casa, llega un aviso de que están listas. Tocarlo abre la app, que las descarga al móvil para escucharlas sin cobertura (se cambia la hora o se apaga en Ajustes).
+Va en su propio canal de notificaciones, «Noticias de la mañana», para poder silenciarlo en Android
+sin tocar el de las medicinas.
 
 ### Importar los datos del bot
 
@@ -99,7 +145,14 @@ Hace falta JDK 17, Android SDK con API 36 y `adb`.
 npm run build:apk                    # todas las arquitecturas
 ./scripts/build-apk.sh --compartir   # solo arm64-v8a, para mi móvil
 # → ludok-home-v<versión>.apk (nombre y versión salen de app.json)
-adb install -r ludok-home-v1.1.0.apk
+```
+
+Hasta que la app se publique, la versión se queda en **1.0.0** y lo que sube con cada APK es
+`android.versionCode` en `app.json`: Android no deja instalar encima un APK con un `versionCode`
+menor que el instalado (habría que desinstalar, y eso borra los datos).
+
+```bash
+adb install -r ludok-home-v1.0.0.apk
 ```
 
 Tiene que ser **release**, no debug: en debug el JavaScript no va dentro del APK, se carga del
@@ -126,13 +179,16 @@ escritorio (`@libsql/client`). La lógica pide la base a `src/lib/dbRef.ts` en v
 | `verify/import.ts` | La importación de las notas del bot, con sus casos raros. Con un JSON de notas reales como argumento, lo prueba también |
 | `verify/caldav.ts` | Leer tareas y eventos de las respuestas de Nextcloud: Deck, alarmas, líneas partidas, días completos |
 | `verify/links.ts` | Vista previa de enlaces: HTML raro, Amazon por ASIN, lo que comparte Instagram, quitar el rastreo |
+| `verify/docker.ts` | Docker sin red: estado, flujo binario de logs/exec, actualizaciones, recrear sin perder nada, compose, puertos, qué imágenes se pueden borrar, estado de la Pi, red de casa (amplificador incluido) y por dónde se llega a la Pi |
+| `verify/docker-real.ts` | Lo mismo contra la Pi de verdad, con un contenedor de usar y tirar. No va en `npm run verify` (ver «Servidor») |
 
 ## Estructura
 
 ```
-app/                 pantallas (expo-router): _layout y (tabs)/
+app/                 pantallas (expo-router): _layout, (tabs)/, ajustes y servidor/
 src/types.ts         modelo de dominio y forma del fichero de copia
 src/lib/             datos y reglas, sin nada nativo salvo db.ts, backup.ts, news.ts, notifications.ts y photos.ts
+src/lib/docker/      cliente de la API de Docker (api.ts) y sus reglas puras (core.ts); client.ts pone el fetch de Expo
 src/hooks/           consultas reactivas y la sincronización al abrir la app
 src/components/      gráficos, formularios, reproductor
 src/ui/              tema y primitivas (Txt, Button, Card, Field, Sheet…)

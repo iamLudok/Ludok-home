@@ -12,7 +12,7 @@ Before posting logs or screenshots, **remove any personal data**: emails, tokens
 
 ## Development Setup
 
-The project has two parts. The **Android app** in `app/` has its own setup and data-layer checks: see [app/README.md](app/README.md) (`npm run verify`, `npm run typecheck`).
+The project has two parts. The **Android app** in `app/` has its own setup and data-layer checks: see [app/README.md](app/README.md) (`npm run verify`, `npm run typecheck`). Changes to the Docker client can also be checked against a real Docker with `npm run verify:docker-real`, which creates and removes its own throwaway container and never touches the others.
 
 For the **Pi side** you don't need a Raspberry Pi. Any Linux machine with Python 3.11+, `ffmpeg` and access to a Nextcloud instance with the News app works.
 
